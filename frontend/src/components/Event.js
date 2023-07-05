@@ -25,7 +25,7 @@ const Event = () => {
     function handleDelete(e) {
         e.preventDefault()
         // fetch(`http://rascal.serverpit.com:8000/event/${id}`, {
-        fetch(`http://rascal.serverpit.com:8000/events/event/${id}`, {
+        fetch(`https://famcaldeta-1-d3105664.deta.app/events/event/${id}`, {
         method:"DELETE",
         headers: {
             "Content-Type": "application/json",
@@ -46,7 +46,7 @@ const Event = () => {
         const id2 = setTimeout(() => controller.abort(), timeout);
         try {
         //const res = await fetch('http://rascal.serverpit.com:8000/event/'+id, {
-        const res = await fetch('http://rascal.serverpit.com:8000/events/event/'+id, {
+        const res = await fetch('https://famcaldeta-1-d3105664.deta.app/events/event/'+id, {
           method:"PATCH",
           signal:controller.signal,
           headers: {
@@ -78,7 +78,7 @@ const Event = () => {
       const controller = new AbortController();
       const id2 = setTimeout(() => controller.abort(), timeout);
       try {
-          const res = await fetch('http://rascal.serverpit.com:8000/events/event/'+id, {
+          const res = await fetch('https://famcaldeta-1-d3105664.deta.app/events/event/'+id, {
             signal: controller.signal,
             method:"GET",
             headers: {

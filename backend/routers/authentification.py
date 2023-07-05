@@ -1,17 +1,19 @@
+import os
 import jwt
 from fastapi import HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
-from decouple import config
+# deactivated for use with deta
+# from decouple import config
 
-SECRET_STRING = config('SECRET_STRING', cast=str)
+# SECRET_STRING = config('SECRET_STRING', cast=str)
 
 
 class Authorization:
     security = HTTPBearer()
     pwd_context = CryptContext(schemes=['bcrypt'], deprecated="auto")
-    secret = SECRET_STRING
+    secret = os.getenv("SECRET_STRING","test")  # added use with deta
 
     def get_password_hash(self, password):
         return self.pwd_context.hash(password)
@@ -30,11 +32,13 @@ class Authorization:
             self.secret,
             algorithm='HS256'
         )
-        # different usage for deploy:
-        # token = jwt. encode (
-        # payload, set. secret.
-        # algorithm= 'HS256'
-        # return token.decode UTF-8) # convert to string
+        # different usage for deploy on raspi:
+        # token = jwt.encode (
+        #     payload,
+        #     self.secret,
+        #     algorithm='HS256'
+        # )
+        # return token.decode('UTF-8')  # convert to string
 
     def decode_token(self, token):
         try:

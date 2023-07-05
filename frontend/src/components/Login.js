@@ -20,7 +20,7 @@ const Login = () => {
     let dict = {username: e.target.text.value, password: e.target.password.value}
     // fetch("http://rascal.serverpit.com:8000/login", {
     try {
-      const response = await fetch("http://rascal.serverpit.com:8000/users/login", {
+      const response = await fetch("https://famcaldeta-1-d3105664.deta.app/users/login", {
         signal:controller.signal,
         method:"POST",
         headers:{
@@ -48,7 +48,7 @@ const Login = () => {
 
   const getUserData =  (token) => {
     // fetch("http://rascal.serverpit.com:8000/me", {
-    fetch("http://rascal.serverpit.com:8000/users/me", {
+    fetch("https://famcaldeta-1-d3105664.deta.app/users/me", {
         method:"GET",
         headers: {
             "Content-Type": "application/json",

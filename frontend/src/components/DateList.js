@@ -41,7 +41,7 @@ function DateList() {
 
   useEffect(() => {
     //fetch('http://192.168.1.4:8000/events/', {
-    fetch('http://rascal.serverpit.com:8000/events/', {
+    fetch('https://famcaldeta-1-d3105664.deta.app/events/', {
       method:"GET",
       headers: {
           "Content-Type": "application/json",

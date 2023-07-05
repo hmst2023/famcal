@@ -1,6 +1,6 @@
 {
-  "short_name": "Familienkalender",
-  "name": "Familienkalender",
+  "short_name": "famcal",
+  "name": "family calender",
   "icons": [
     {
       "src": "favicon.ico",

@@ -42,7 +42,7 @@ const NewEvent = () => {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeout);
         try {
-                const response = await fetch("http://rascal.serverpit.com:8000/events/", {
+                const response = await fetch("https://famcaldeta-1-d3105664.deta.app/events/", {
                     signal: controller.signal,
                     method: "POST",
                     headers:{

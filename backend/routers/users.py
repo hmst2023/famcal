@@ -5,10 +5,8 @@ from bson import ObjectId
 from .authentification import Authorization
 from .models import LoginBase, CurrentUser, UserBase
 
-
 router = APIRouter()
 auth_handler = Authorization()
-
 MSG_COLLECTION = "Users"
 
 

@@ -7,11 +7,8 @@ from bson import ObjectId
 from .authentification import Authorization
 from .models import DateWithId, Event, EventUpdate
 
-
 router = APIRouter()
 auth_handler = Authorization()
-
-
 MSG_COLLECTION = "events"
 
 
