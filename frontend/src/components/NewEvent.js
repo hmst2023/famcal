@@ -6,7 +6,7 @@ var correctedDate = new Date(date)
 correctedDate.setMinutes(date.getMinutes()-date.getTimezoneOffset()) 
 
 const NewEvent = () => {
-    const {auth, setAuth} = useAuth()
+    const {auth} = useAuth()
     const navigate=useNavigate();
 
     const emptyEvent={

@@ -1,16 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom';
-import Layout from './Layout';
 import { useNavigate } from 'react-router-dom';
 import useAuth from "../hooks/useAuth";
 
 const Event = () => {
-    const emptyChange={
-      "channel":null,
-      "start":null,
-      "text":null
-      }
-    const {auth, setAuth} = useAuth()
+    const {auth} = useAuth()
     const {id} = useParams()
     const [event, setEvent] = useState({})
     const [newEvent, setNewEvent] = useState({})
@@ -24,7 +18,6 @@ const Event = () => {
 
     function handleDelete(e) {
         e.preventDefault()
-        // fetch(`http://rascal.serverpit.com:8000/event/${id}`, {
         fetch(`https://famcaldeta-1-d3105664.deta.app/events/event/${id}`, {
         method:"DELETE",
         headers: {
@@ -45,7 +38,6 @@ const Event = () => {
         const controller = new AbortController();
         const id2 = setTimeout(() => controller.abort(), timeout);
         try {
-        //const res = await fetch('http://rascal.serverpit.com:8000/event/'+id, {
         const res = await fetch('https://famcaldeta-1-d3105664.deta.app/events/event/'+id, {
           method:"PATCH",
           signal:controller.signal,

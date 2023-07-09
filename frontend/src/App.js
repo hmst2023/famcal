@@ -8,6 +8,7 @@ import RequiredAuthentication from './components/RequiredAuthentication'
 import Event from './components/Event'
 
 
+
 function App() {
   return (
     <Routes>
