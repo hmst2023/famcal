@@ -1,21 +1,21 @@
-# import os  # add for use with deta
+import os  # add for use with deta
 from fastapi import FastAPI
 import uvicorn
 from pymongo import MongoClient
 from fastapi.middleware.cors import CORSMiddleware
 from routers.events import router as event_router
 from routers.users import router as user_router
-from decouple import config # deactivate for use with deta
+# from decouple import config # deactivate for use with deta
 
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"],
                    allow_headers=["*"])
 
-DB_URL = config('DB_URL', cast=str)  # deactivate for use with deta
-DB_NAME = config('DB_NAME', cast=str)  # deactivate for use with deta
-# DB_URL = os.getenv("DB_URL", "test")  # add for use with deta
-# DB_NAME = os.getenv("DB_NAME", "test")  # add for use with deta
+# DB_URL = config('DB_URL', cast=str)  # deactivate for use with deta
+# DB_NAME = config('DB_NAME', cast=str)  # deactivate for use with deta
+DB_URL = os.getenv("DB_URL", "test")  # add for use with deta
+DB_NAME = os.getenv("DB_NAME", "test")  # add for use with deta
 
 
 @app.on_event("startup")

@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 class Authorization:
     security = HTTPBearer()
     pwd_context = CryptContext(schemes=['bcrypt'], deprecated="auto")
-    secret = os.getenv("SECRET_STRING","test")  # added use with deta
+    secret = os.getenv("SECRET_STRING","test")  # add for use with deta
 
     def get_password_hash(self, password):
         return self.pwd_context.hash(password)

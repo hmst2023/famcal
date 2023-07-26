@@ -52,7 +52,7 @@ const Propose = () => {
         const controller = new AbortController();
         const id2 = setTimeout(() => controller.abort(), timeout);
         try {
-          if (e.target.password.value!=e.target.verifyPassword){
+          if (e.target.password.value!=e.target.verifyPassword.value){
             throw new Error("Verify Password does not match") 
           }
         const res = await fetch(process.env.REACT_APP_BACKEND_URL + "/users/register", {
