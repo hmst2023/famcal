@@ -18,7 +18,7 @@ const Event = () => {
 
     function handleDelete(e) {
         e.preventDefault()
-        fetch(`https://famcaldeta-1-d3105664.deta.app/events/event/${id}`, {
+        fetch(`${process.env.REACT_APP_BACKEND_URL}/events/event/${id}`, {
         method:"DELETE",
         headers: {
             "Content-Type": "application/json",
@@ -26,10 +26,7 @@ const Event = () => {
         }
     })
     .then((response) => response.json())
-    .then((data) => {
-      console.log(data);
-      navigate("/", {replace:true});
-    })
+    .then(navigate("/", {replace:true}))
     }
     const handleUpdate = async(e)=>{
       if (e.target.form.checkValidity()){
@@ -38,7 +35,7 @@ const Event = () => {
         const controller = new AbortController();
         const id2 = setTimeout(() => controller.abort(), timeout);
         try {
-        const res = await fetch('https://famcaldeta-1-d3105664.deta.app/events/event/'+id, {
+        const res = await fetch(process.env.REACT_APP_BACKEND_URL + "/events/event/"+id, {
           method:"PATCH",
           signal:controller.signal,
           headers: {
@@ -47,7 +44,6 @@ const Event = () => {
             },
           body: JSON.stringify(newEvent)
           })
-        const data = await res.json()
         navigate("/")
         } catch (error) {
           if (error.name==='AbortError'){
@@ -70,7 +66,7 @@ const Event = () => {
       const controller = new AbortController();
       const id2 = setTimeout(() => controller.abort(), timeout);
       try {
-          const res = await fetch('https://famcaldeta-1-d3105664.deta.app/events/event/'+id, {
+          const res = await fetch(process.env.REACT_APP_BACKEND_URL + "/events/event/"+id, {
             signal: controller.signal,
             method:"GET",
             headers: {
@@ -111,10 +107,9 @@ const Event = () => {
             <p>Author: {event.author}</p>
             <form>
             <p>Channel:  <select value={newEvent.channel} id="channel" name="channel" label="channel" placeholder="channel" onChange={onChange} required>  
-                          <option value="Nora">Nora</option>
-                          <option value="Livia">Livia</option>
-                          <option value="Martina">Martina</option>
-                          <option value="Hannes">Hannes</option>
+                {auth['members'].map(
+                            (entry)=><option value={entry}>{entry}</option>
+                        )}    
                       </select></p>
             <p>Startzeit:  <input value={newEvent.start} type="datetime-local" id="start" name="start" label="start" placeholder="start" onChange={onChange} size="40" required/></p>
             <p>Text:  <input value={newEvent.text} type='text' id="text" name="text" label="text" placeholder="text" onChange={onChange} size="40" required minlength="3"/></p>

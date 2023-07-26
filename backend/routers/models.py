@@ -1,7 +1,7 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from bson import ObjectId, Optional
 import datetime
-from typing import Union
+from typing import Union, List
 
 
 class PyObjectId(ObjectId):
@@ -27,10 +27,33 @@ class MongoBaseModel(BaseModel):
         jsonable_encoder = {ObjectId:str}
 
 
+class ChangePass(BaseModel):
+    old: str
+    new: str
+
+
 class EventUpdate(BaseModel):
     text: Optional[str] = None
     channel: Optional[str] = None
     start: Optional[datetime.datetime] = None
+
+
+class Disposal(BaseModel):
+    username: str
+
+
+class Proposal(BaseModel):
+    username: Optional[str]
+    email: EmailStr
+
+
+class ProposalUser(BaseModel):
+    username: str
+    email: EmailStr
+
+
+class ProposalFam(BaseModel):
+    email: EmailStr
 
 
 class Event(BaseModel):
@@ -42,26 +65,8 @@ class Event(BaseModel):
     text: str
 
 
-class EventWithId(MongoBaseModel):
-    timestamp: datetime.datetime
-    channel: str
-    author: str
-    start: datetime.datetime
-    end: datetime.datetime
-    text: str
-
-
-class Date(BaseModel):
-    date: datetime.date
-    day: str
-    nora: str
-    livia: str
-    martina: str
-    hannes: str
-
-
 class Cards(BaseModel):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    event_id: PyObjectId
     channel: str
     items: list[Union[str, datetime.time]]
 
@@ -72,16 +77,21 @@ class DateWithId(BaseModel):
 
 
 class UserBase(BaseModel):
-    username:str
-    password:str
+    username: str
+    email: EmailStr
+    password: str
+    link: str
 
 
 class LoginBase(BaseModel):
-    username: str
+    email: EmailStr
     password: str
 
 
-class CurrentUser(BaseModel):
+class CurrentUser(MongoBaseModel):
     username: str
-    password: str
+    admin: bool
 
+
+class AddOther(BaseModel):
+    name: str

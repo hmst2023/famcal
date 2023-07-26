@@ -1,14 +1,13 @@
 import * as React from "react";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import DateCard from "./DateCard";
 import Cards from "./Cards";
 import useAuth from "../hooks/useAuth";
-import FamContext from "../context/FamProvider";
 
 function DateList() {
   const {auth} = useAuth();
   const [msgs, setMsgs] = useState([]);
-  const {fam} = useContext(FamContext);
+
   let actual_year = 0;
   let actual_month = -1;
   const months =['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September','Oktober','November', 'Dezember'];
@@ -30,11 +29,11 @@ function DateList() {
         <div>
           <div className="h-5"></div>
           <div className="h-20 bg-aubergine text-right text-lg px-8">{months[e]}</div>
-          <div className={`px-5 text-center bg-aubergine grid grid-cols-${fam.length+1}`}>
+          <div className={`px-5 text-center bg-aubergine grid grid-cols-${auth['members'].length+1}`}>
         
                             
                           <div>{null}</div>
-                          {fam.map((e1, i)=>{
+                          {auth['members'].map((e1, i)=>{
                               return<div className={`text-base md:text-xl ${ i%2===0 ? 'text-stone-500' : 'text-fuchsia-900'}`}> {e1}</div>
                          })}
             
@@ -46,7 +45,7 @@ function DateList() {
   }
 
   useEffect(() => {
-    fetch('https://famcaldeta-1-d3105664.deta.app/events/', {
+    fetch(process.env.REACT_APP_BACKEND_URL + "/events/", {
       method:"GET",
       headers: {
           "Content-Type": "application/json",
@@ -67,9 +66,9 @@ function DateList() {
             {yearCheck(new Date(e1.date).getFullYear())}
             {monthCheck(new Date(e1.date).getMonth())}
           </div>
-          <div className={`px-5 bg-aubergine grid grid-cols-${fam.length+1}`}>
+          <div className={`px-5 bg-aubergine grid grid-cols-${auth['members'].length+1}`}>
             <div><DateCard date={e1.date}/></div>
-            <div className={`col-span-${fam.length}`}><Cards cards={e1.cards}/></div>
+            <div className={`col-span-${auth['members'].length}`}><Cards cards={e1.cards}/></div>
           </div>
         </div>
       )

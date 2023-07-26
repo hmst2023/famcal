@@ -1,4 +1,3 @@
-import { data } from 'autoprefixer';
 import React, { useState } from 'react'
 import { useNavigate } from "react-router-dom";
 import useAuth from '../hooks/useAuth';
@@ -17,10 +16,9 @@ const Login = () => {
     const timeout = 8000;
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
-    let dict = {username: e.target.text.value, password: e.target.password.value}
-    // fetch("http://rascal.serverpit.com:8000/login", {
+    let dict = {email: e.target.email.value, password: e.target.password.value}    
     try {
-      const response = await fetch("https://famcaldeta-1-d3105664.deta.app/users/login", {
+      const response = await fetch(process.env.REACT_APP_BACKEND_URL + "/users/login", {
         signal:controller.signal,
         method:"POST",
         headers:{
@@ -47,8 +45,7 @@ const Login = () => {
     }
 
   const getUserData =  (token) => {
-    // fetch("http://rascal.serverpit.com:8000/me", {
-    fetch("https://famcaldeta-1-d3105664.deta.app/users/me", {
+    fetch(process.env.REACT_APP_BACKEND_URL + "/users/me", {
         method:"GET",
         headers: {
             "Content-Type": "application/json",
@@ -57,8 +54,8 @@ const Login = () => {
     })
     .then((response) => response.json())
     .then((data) => {
-      let test = data;
-      test["token"]=token;
+      var test = data;
+      test["token"] = token;
       setAuth(test);
       navigate("/", {replace:true});
     })
@@ -69,7 +66,7 @@ const Login = () => {
       <div className='App max-w-6xl  mx-auto bg-aubergine p-8'>
         <div className='flex'>
         <form onSubmit={onFormSubmit} onReset={onFormReset}>
-          Username: <input type="text" name="text" required/><br/>
+          E-Mail:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <input type="email" name="email" required/><br/>
           <p>&nbsp;</p>
           Passwort: &nbsp;&nbsp;<input type="password" name="password" required/><br/>
           <p className='text-right text-xs text-red-500'>&nbsp; {apiError}</p>

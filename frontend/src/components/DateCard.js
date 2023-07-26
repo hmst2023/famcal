@@ -9,7 +9,7 @@ const DateCard = (props) => {
   
   return (
     
-    <div className="bg-zinc-400 shadow p-3 rounded m-1 md:m-2">
+    <div className="bg-zinc-400 shadow hyphens-auto p-2 md:p-3 rounded m-1 md:m-2">
         <div className='text-center text-xs md:text-base'>{getDayOfWeek(props.date)}, {props.date.slice(8,10)}.{props.date.slice(5,7)}</div>
 
     </div>

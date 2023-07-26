@@ -25,7 +25,8 @@ const Header = () => {
       </div>
 
       <div className='text-right text-fuchsia-900 pr-8'>
-        {auth?.username ? `Logged in as ${auth.username}`: "Not Logged in"}
+        {auth?.username ? <span> Logged in as <Link to="/setup">{auth.username} </Link></span>: "Not Logged in"
+        }
         {auth?.username && (
           <button onClick={handleLogout}>(logout)</button> 
         ) }

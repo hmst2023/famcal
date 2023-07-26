@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuth from '../hooks/useAuth';
+
 var date = new Date();
 var correctedDate = new Date(date)
 correctedDate.setMinutes(date.getMinutes()-date.getTimezoneOffset()) 
@@ -42,7 +43,7 @@ const NewEvent = () => {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeout);
         try {
-                const response = await fetch("https://famcaldeta-1-d3105664.deta.app/events/", {
+                const response = await fetch(process.env.REACT_APP_BACKEND_URL + "/events/", {
                     signal: controller.signal,
                     method: "POST",
                     headers:{
@@ -73,7 +74,6 @@ const NewEvent = () => {
                 };
             clearTimeout(id);
              }
-        // const response = await fetch("http://rascal.serverpit.com:8000/", {
         
     
   return (
@@ -89,11 +89,10 @@ const NewEvent = () => {
             </ul>} </div>
         <div className='flex'>
             <form>
-                <select value={newEvent.channel} id="channel" name="channel" label="channel" placeholder="channel" onChange={onChange} required>      
-                    <option value="Nora">Nora</option>
-                    <option value="Livia">Livia</option>
-                    <option value="Martina">Martina</option>
-                    <option value="Hannes">Hannes</option>
+                <select value={newEvent.channel} id="channel" name="channel" label="channel" placeholder="channel" onChange={onChange} required>
+                    {auth['members'].map(
+                        (entry)=><option value={entry}>{entry}</option>
+                    )}    
                 </select>
                 <p>&nbsp;</p>
                 <div>Start: <input value={newEvent.start} className='w-full' type="datetime-local" id="start" name="start" label="start" placeholder="start" onChange={onChange} required/></div>
