@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import useAuth from "../hooks/useAuth";
+import { fromJSON } from 'postcss';
 
 const Event = () => {
     const {auth} = useAuth()
@@ -31,6 +32,8 @@ const Event = () => {
     const handleUpdate = async(e)=>{
       if (e.target.form.checkValidity()){
         e.preventDefault()
+        var event = {...newEvent}
+        event['start'] = new Date(event.start).toISOString()
         const timeout = 8000;
         const controller = new AbortController();
         const id2 = setTimeout(() => controller.abort(), timeout);
@@ -42,7 +45,7 @@ const Event = () => {
               "Content-Type": "application/json",
               Authorization : `Bearer ${auth.token}`,
             },
-          body: JSON.stringify(newEvent)
+          body: JSON.stringify(event)
           })
         navigate("/")
         } catch (error) {
@@ -79,8 +82,11 @@ const Event = () => {
             let errArray = data.detail.map(e1=>{return `${e1.loc[1]}- ${e1.msg}`});
             setError(errArray);
           } else {
-            setError([])
-            setEvent(data)
+            setError([]);
+            setEvent(data);
+            var date = new Date(data.start);
+            date.setMinutes(date.getMinutes()-date.getTimezoneOffset()*2)
+            data.start=(date.toISOString().slice(0,16));
             setNewEvent(JSON.parse(JSON.stringify(data)));
           }
         } catch (error) {
@@ -98,8 +104,8 @@ const Event = () => {
     },[])
 
   return (
-    <div className="bg-stone-200 w-screen h-screen">
-      <div className='App max-w-6xl  mx-auto bg-aubergine p-8'>
+
+      <div className='bg-aubergine p-8'>
           <div>
           <span className='text-xl font-bold'>
             selected event
@@ -125,7 +131,6 @@ const Event = () => {
                 </form>
           </div>
       </div>
-    </div>
   )
 }
 

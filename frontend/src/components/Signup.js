@@ -43,8 +43,7 @@ const Signup = () => {
     }
 
   return (
-    <div className="bg-stone-200 w-screen h-screen">
-      <div className='App max-w-6xl  mx-auto bg-aubergine p-8'>
+      <div className='bg-aubergine p-8'>
         <h1 className='font-bold text-lg leading-loose py-2'>Signup</h1>
         Enter your emailadress: 
         <div className='flex'>
@@ -64,7 +63,6 @@ const Signup = () => {
     </div>
         </div>
 
-    </div>
   )
 }
 

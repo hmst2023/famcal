@@ -57,11 +57,9 @@ class ProposalFam(BaseModel):
 
 
 class Event(BaseModel):
-    timestamp: datetime.datetime
+    author:Optional[str]
     channel: str
-    author: str
     start: datetime.datetime
-    end: datetime.datetime
     text: str
 
 
@@ -81,10 +79,11 @@ class UserBase(BaseModel):
     email: EmailStr
     password: str
     link: str
+    acceptedTerms:bool
 
 
 class LoginBase(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 

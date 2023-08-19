@@ -1,41 +1,61 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {Link} from "react-router-dom";
 import useAuth from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-
+import { ReactComponent as Logo } from './logo.svg';
 
 const Header = () => {
-  const {auth, setAuth} =useAuth();
+  const {auth, setAuth} = useAuth();
+  const [menue, setMenue] = useState(false);
   let navigate = useNavigate();
 
-  function handleLogout (){
+
+  const toggleMenue = () => {
+    if (!menue){
+      window.addEventListener('mouseup', function(){
+        setTimeout(setMenue,200, false)
+        console.log('clicked')
+      }, {once:true})
+    } 
+    
+    setMenue(!menue)
+
+  }
+
+  const handleLogout = ()=>{
+    setMenue(false)
     setAuth({})
     navigate("/login", {replace:true})
   }
+  const Dropdown =() =>{
+    return(
+      <div className='flex relative my-1'>
+        <div className='flex absolute right-0 bg-blue-700 p-2 mr-0 rounded text-white text-left'>
+        <ul>
+        <li className='hover:text-zinc-400'><Link to="/">Kalender</Link></li>
+        <li className='hover:text-zinc-400'><Link to="/setup">Einstellungen</Link></li>
+        <li className='hover:text-zinc-400'><button onClick={handleLogout}>Logout</button></li>
+        </ul>
+      </div>
+      </div>
+    )
+  }
+  
   return (
-    <div className='bg-stone-200'>
-    <nav className='max-w-6xl  mx-auto grid grid-cols-2 justify-between bg-gradient-to-t from-fuchsia-400 to-fuchsia-200'>
-      <div className='pl-8 py-5'>
-        <h1 className='text-3xl font-bold text-fuchsia-900'><Link to="/">Familienplaner</Link></h1>
-        {auth?.username && (
-           <div className='pr-8 text-stone-300'><Link to="/new">new event</Link></div> 
-        ) }
-
-       
+    <nav className='grid grid-cols-2 px-8 py-5 justify-between bg-gradient-to-t from-fuchsia-400 to-fuchsia-200'>
+      <div className='box-content w-20 md:w-40'>
+       <Link to="/"><Logo/></Link>
       </div>
 
-      <div className='text-right text-fuchsia-900 pr-8'>
-        {auth?.username ? <span> Logged in as <Link to="/setup">{auth.username} </Link></span>: "Not Logged in"
-        }
-        {auth?.username && (
-          <button onClick={handleLogout}>(logout)</button> 
-        ) }
-        
-        
-       
-      </div>      
+      <div className='text-right'>
+        {auth?.username && 
+        <button onClick={toggleMenue} className='bg-transparent text-fuchsia-900 font-semibold py-1 px-2 border border-zinc-400 rounded'>
+          {auth.username} {menue ? '\u25B2':'\u25BC'}
+        </button>}
+        {(menue && auth?.username) && <Dropdown/>}
+      </div>
     </nav>
-    </div>
+
   )
 }
 

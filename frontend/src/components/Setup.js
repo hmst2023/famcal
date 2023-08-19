@@ -5,11 +5,13 @@ import { useNavigate } from 'react-router-dom';
 const Setup = () => {
     const emptyFormValue = {
         oldPass:"",
-        newPass:""
+        newPass:"",
+        verifyPass:""
     }
     const {auth, setAuth} = useAuth();
     const [apiError,setApiError] = useState();
     const [addDescription, setAddDescription] = useState();
+    const [irreversibleError, setIrreversibleError] =useState();
     const [degradeDescription,setDegradeDescription] = useState({});
     const [otherDescription,setOtherDescription] = useState({});
     const [addOtherError,setAddOtherError] = useState();
@@ -28,78 +30,116 @@ const Setup = () => {
         setFormValues(emptyFormValue);
         navigate("/setup", {replace:true});
       };
-    
-    const onFormSubmit = async (e)=>{
+    const handleIrreversibleClick = async (e) => {
       e.preventDefault();
       const timeout = 8000;
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), timeout);
-      let dict = {old: e.target.oldPass.value, new: e.target.newPass.value}    
+
       try {
-        const response = await fetch(process.env.REACT_APP_BACKEND_URL + "/users/change_pass", {
+        if (!window.confirm("Bist du ganz sicher!")) {throw new Error('Aborted')}
+        const response = await fetch(process.env.REACT_APP_BACKEND_URL + "/users/proposefam", {
           signal:controller.signal,
-          method:"PATCH",
+          method:"Delete",
+          headers:{
+              "Content-Type":"application/json",
+              Authorization : `Bearer ${auth.token}`,
+          }
+        });
+          if (response.ok){
+            setIrreversibleError(["Deleted everything"]);
+            setAuth({})
+            navigate("/login", {replace:true})
+  
+          } else{
+            let errorResponse = await response.json();
+            setIrreversibleError(errorResponse["detail"]);
+          }
+      } catch (error) {
+        if (error.name==='AbortError'){
+          setIrreversibleError('Possible Timeout')
+        } else {
+          setIrreversibleError(error.message)
+        }
+      };
+      clearTimeout(id);
+      
+
+    }
+    const onFormSubmit = async (e)=>{
+    e.preventDefault();
+    const timeout = 8000;
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    let dict = {old: e.target.oldPass.value, new: e.target.newPass.value}    
+    try {
+      if (e.target.newPass.value != e.target.verifyPass.value){
+        throw new Error("Verify Password does not match")
+      }
+      const response = await fetch(process.env.REACT_APP_BACKEND_URL + "/users/change_pass", {
+        signal:controller.signal,
+        method:"PATCH",
+        headers:{
+            "Content-Type":"application/json",
+            Authorization : `Bearer ${auth.token}`,
+        },
+        body:JSON.stringify(dict)});
+        if (response.ok){
+          const token = await response.json();
+          setApiError(["password changed"]);
+          setFormValues(emptyFormValue);
+
+        } else{
+          let errorResponse = await response.json();
+          setApiError(errorResponse["detail"]);
+        }
+    } catch (error) {
+      if (error.name==='AbortError'){
+        setApiError('Possible Timeout')
+      } else {
+        setApiError(error.message)
+      }
+    };
+    clearTimeout(id);
+
+  }
+  function handleChange(e){
+      setFormValues({... formValues, [e.target.name]: e.target.value });
+
+  }
+  async function handleAddOther(e){
+      e.preventDefault();
+      const timeout = 8000;
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeout);
+      let dict = {name: e.target.addOtherField.value}    
+      try {
+        const response = await fetch(process.env.REACT_APP_BACKEND_URL + "/users/add", {
+          signal:controller.signal,
+          method:"POST",
           headers:{
               "Content-Type":"application/json",
               Authorization : `Bearer ${auth.token}`,
           },
           body:JSON.stringify(dict)});
           if (response.ok){
-            const token = await response.json();
-            setApiError(["password changed"]);
-            setFormValues(emptyFormValue);
-
+            var blubb = auth
+            blubb.members.push(dict.name)
+            setAuth(blubb);
+            setRefreshFetch(!refreshFetch)
+            showAddOtherHandler()
           } else{
             let errorResponse = await response.json();
-            setApiError(errorResponse["detail"]);
+            setAddOtherError(errorResponse["detail"]);
           }
       } catch (error) {
         if (error.name==='AbortError'){
-          setApiError('Possible Timeout')
+          setAddOtherError('Possible Timeout')
         } else {
-          setApiError(error.message)
+          setAddOtherError(error.message)
         }
       };
       clearTimeout(id);
-  
-      }
-    function handleChange(e){
-        setFormValues({... formValues, [e.target.name]: e.target.value });
-
-    }
-    async function handleAddOther(e){
-        e.preventDefault();
-        const timeout = 8000;
-        const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), timeout);
-        let dict = {name: e.target.addOtherField.value}    
-        try {
-          const response = await fetch(process.env.REACT_APP_BACKEND_URL + "/users/add", {
-            signal:controller.signal,
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json",
-                Authorization : `Bearer ${auth.token}`,
-            },
-            body:JSON.stringify(dict)});
-            if (response.ok){
-              var blubb = auth
-              blubb.members.push(dict.name)
-              setAuth(blubb);
-              setRefreshFetch(!refreshFetch)
-              showAddOtherHandler()
-            } else{
-              let errorResponse = await response.json();
-              setAddOtherError(errorResponse["detail"]);
-            }
-        } catch (error) {
-          if (error.name==='AbortError'){
-            setAddOtherError('Possible Timeout')
-          } else {
-            setAddOtherError(error.message)
-          }
-        };
-        clearTimeout(id);
   
     }
     async function handleRemoveOther(e){
@@ -174,6 +214,10 @@ const Setup = () => {
         }
       };
       clearTimeout(id);
+      if (!auth.admin) {
+        setAuth({})
+        navigate("/login", {replace:true})
+      }
 
   }
     async function handleUpgradeOther(e){
@@ -338,14 +382,16 @@ const Setup = () => {
     }
   return (
     <div>
-        <div className="bg-stone-200 w-screen h-screen">
-            <div className='App max-w-6xl  mx-auto bg-aubergine px-8 py-6'>
+
+            <div className='bg-aubergine px-8 py-6'>
                  <h1 className='font-bold text-lg leading-loose py-2'>Setup Personal Settings</h1>
                  <div className='flex'>
                  <form onSubmit={onFormSubmit} onReset={onFormReset} autoComplete='off'>
                     actual password: <input value={formValues.oldPass} onChange={handleChange} type="password" name="oldPass" required/><br/>
                     <p>&nbsp;</p>
                     new passwort: &nbsp;&nbsp;&nbsp;&nbsp;<input value={formValues.newPass} type="password" name="newPass" onReset={onFormReset} onSubmit={onFormSubmit} onChange={handleChange} autocomplete="new-password" required/><br/>
+                    <p>&nbsp;</p>
+                    Verify Password: <input value={formValues.verifyPass} minLength="4" name='verifyPass' type='password'  onChange={handleChange} required/>
                     <p className='text-right text-xs text-red-500'>&nbsp; {apiError}</p>
                     <div className='text-right text-lg'>
                     <input className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded" type="submit"/> <br/>
@@ -354,12 +400,13 @@ const Setup = () => {
                     </span></div>
                     </form>
                 </div>
+                <div>{auth.admin ? <button className="bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white px-1 border border-red-500 hover:border-transparent rounded" onClick={handleIrreversibleClick}>Irreversible delete all family data now</button>:<button data-value={auth.username} onClick={handleDegradeUser} className="bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white px-1 border border-red-500 hover:border-transparent rounded">Delete my Account</button>}</div> 
+                {auth.admin && <p className='text-xs text-red-500'>{irreversibleError}</p>}
             </div>
             <div>
             <p>{auth?.admin && FamilySetup()}</p>
             </div>
 
-        </div>
 
 
 

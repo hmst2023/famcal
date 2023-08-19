@@ -1,19 +1,19 @@
-import os
+import os  # add for use with deta
 import jwt
 from fastapi import HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
-# deactivated for use with deta
-# from decouple import config
+# from decouple import config # deactivate for use with deta
 
-# SECRET_STRING = config('SECRET_STRING', cast=str)
+# SECRET_STRING = config('SECRET_STRING', cast=str) # deactivate for use with deta
 
 
 class Authorization:
     security = HTTPBearer()
     pwd_context = CryptContext(schemes=['bcrypt'], deprecated="auto")
     secret = os.getenv("SECRET_STRING","test")  # add for use with deta
+    # secret = SECRET_STRING # deactivate for use with deta
 
     def get_password_hash(self, password):
         return self.pwd_context.hash(password)

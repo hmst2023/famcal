@@ -1,7 +1,7 @@
 import React from 'react'
 import { useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 
 const Propose = () => {
@@ -47,7 +47,7 @@ const Propose = () => {
         }
         dict['link'] = link
         dict['password'] = e.target.password.value
-        console.log(dict)
+        dict['acceptedTerms']=e.target.acceptedTerms.checked
         const timeout = 8000;
         const controller = new AbortController();
         const id2 = setTimeout(() => controller.abort(), timeout);
@@ -65,6 +65,9 @@ const Propose = () => {
         })
         if (res.ok){
             navigate('/',{replace:true})
+        } else {
+          let errorResponse = await res.json();
+          setError(errorResponse["detail"])
         }
         } catch (error) {
         if (error.name==='AbortError'){
@@ -78,16 +81,15 @@ const Propose = () => {
         getProposal()
       },[])
   return (
-
-    <div className="bg-stone-200 w-screen h-screen">
-    <div className='App max-w-6xl  mx-auto bg-aubergine p-8'>
+    <div className='bg-aubergine p-8'>
         <h1 className='font-bold text-lg leading-loose py-2'>Register User:</h1>
         <div className='flex'>
         <form onSubmit={submitHandler}>
         {proposal.username ? <p className='py-1'>Username:&nbsp;&nbsp;{proposal.username}</p> : <p className='py-1'>Username:&nbsp;&nbsp;<input name='username' type='text' required/></p>}
             <p className='py-1'>Email:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {proposal.email}</p>
-            <p className='py-1'>Password: &nbsp;&nbsp;<input name='password' type='password' required/></p>
+            <p className='py-1'>Password: &nbsp;&nbsp;<input name='password' type='password'  minLength="4" required/></p>
             <p className='py-1'>Verify Password: <input name='verifyPassword' type='password' required/></p>
+            <p><input name="acceptedTerms" type='checkbox' required/> Ich habe die <Link to='/termsofuse' className='text-blue-700'>Nutzungsbedingungen</Link> und die <Link to="/datenschutz" className='text-blue-700'>Datenschutzverordnung</Link> gelesen und stimme ihnen zu.</p>
             <p className='text-right text-xs text-red-500'>&nbsp; {error}</p>
             <div className='text-right text-lg'>
             <input type='submit' className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"/><br/>
@@ -98,7 +100,6 @@ const Propose = () => {
         </form>
         </div>
        
-    </div>
     </div>
   )
 }

@@ -6,6 +6,7 @@ import datetime
 from bson import ObjectId
 from .authentification import Authorization
 from .models import DateWithId, Event, EventUpdate
+from pytz import timezone
 
 router = APIRouter()
 auth_handler = Authorization()
@@ -14,15 +15,23 @@ USER_COLLECTION = "users"
 
 @router.get("/", response_description="List all events")
 def list_all_events(request:Request, user_id=Depends(auth_handler.auth_wrapper)) -> List[DateWithId]:
+    user_timezone = timezone(request.headers['timezone'])
+
     user_collection = request.app.db[USER_COLLECTION]
     current_user = user_collection.find_one({'_id': ObjectId(user_id)})
     msg_collection = request.app.db[str(current_user['fam'])]
 
-    actual_date = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    msg_list = list(msg_collection.find({'start':{'$gt':actual_date}}).sort("start"))
+    utc = datetime.datetime.now(datetime.timezone.utc)
+    local_time = utc.astimezone(user_timezone)
+    local_date = local_time.replace(microsecond=0,second=0,minute=0,hour=0)
+
+    # local date muss auf die erste minute des tages gesetzt werden
+    msg_list = list(msg_collection.find({'start':{'$gt':local_date}}).sort("start"))
     response_msg_list = []
     actual_cards = []
     for position, msg in enumerate(msg_list):
+        msg['start'] = msg['start'].replace(tzinfo=datetime.timezone.utc)
+        msg['start'] = msg['start'].astimezone(user_timezone)
         temp_date = msg['start'].date()
         temp_card = {
                 "cards":[{"event_id":msg["_id"], "channel": msg["channel"], "items":[msg["text"], msg["start"].time()]}]
@@ -46,9 +55,11 @@ def show_events(request: Request, event_id: str, user_id=Depends(auth_handler.au
 
     msg_collection = request.app.db[str(current_user['fam'])]
     event = msg_collection.find_one({"_id": ObjectId(event_id)})
+    author = user_collection.find_one({'_id': event['author']})
+    event['author'] = author['username']
     if event is not None:
         return Event(**event)
-    raise HTTPException(status_code=404, detail=f"Car with Id: {event_id} not found")
+    raise HTTPException(status_code=404, detail=f"Event with Id: {event_id} not found")
 
 
 @router.delete("/event/{event_id}", response_description="Delete Event")
@@ -70,10 +81,10 @@ def create_event(request: Request, msg:Event = Body(...), user_id=Depends(auth_h
     msg_collection = request.app.db[str(current_user['fam'])]
 
     msg = jsonable_encoder(msg)
-    msg["timestamp"] = datetime.datetime.now()
-    msg["author"] = user_id
-    msg["start"] = datetime.datetime.strptime(msg["start"], '%Y-%m-%dT%H:%M:%S')
-    msg["end"] = datetime.datetime.strptime(msg["end"], '%Y-%m-%dT%H:%M:%S')+datetime.timedelta(hours=2)
+    msg["timestamp"] = datetime.datetime.utcnow()
+    msg["author"] = ObjectId(user_id)
+    msg["start"] = datetime.datetime.fromisoformat(msg["start"])
+    msg["end"] = msg["start"]+datetime.timedelta(hours=2)
     new_msg = msg_collection.insert_one(msg)
     created_msg = msg_collection.find_one({"_id": new_msg.inserted_id})
     return JSONResponse(status_code=status.HTTP_201_CREATED, content=str(created_msg))
@@ -87,12 +98,12 @@ def update_event(event_id: str, request:Request, event: EventUpdate = Body(...),
     msg_collection = request.app.db[str(current_user['fam'])]
 
     msg = jsonable_encoder(event.dict(exclude_unset=True))
-    msg["timestamp"] = datetime.datetime.now()
-    msg["author"] = user_id
+    msg["timestamp"] = datetime.datetime.utcnow()
+    msg["author"] = ObjectId(user_id)
     if "start" in msg:
-        msg["start"] = datetime.datetime.strptime(msg["start"], '%Y-%m-%dT%H:%M:%S')
+        msg["start"] = datetime.datetime.fromisoformat(msg["start"])
     msg_collection.update_one({"_id":ObjectId(event_id)}, {"$set": msg})
     event = msg_collection.find_one({"_id":ObjectId(event_id)})
     if event is not None:
-        return Event(**event)
+        return JSONResponse(status_code=status.HTTP_200_OK, content="updated")
     raise HTTPException(status_code=404, detail=f"Event with {event_id} not found")

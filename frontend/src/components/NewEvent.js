@@ -2,22 +2,19 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuth from '../hooks/useAuth';
 
-var date = new Date();
-var correctedDate = new Date(date)
-correctedDate.setMinutes(date.getMinutes()-date.getTimezoneOffset()) 
-
 const NewEvent = () => {
     const {auth} = useAuth()
-    const navigate=useNavigate();
+    const navigate = useNavigate();
+    var date = new Date();
+    date.setMinutes(date.getMinutes()-date.getTimezoneOffset())
 
     const emptyEvent={
-        "timestamp:":"now",
         "channel":`${auth.username}`,
-        "author":"n/a",
-        "start":`${correctedDate.toISOString().slice(0,16)}`,
-        "end": "",
+        "start":date.toISOString().slice(0,16),
         "text":""
     }
+    console.log(emptyEvent.start)
+
     const [newEvent, setNewEvent] = useState(emptyEvent)
     const [error, setError] = useState([])
 
@@ -25,23 +22,25 @@ const NewEvent = () => {
         var textField = document.getElementById('text')
         var datePicker = document.getElementById('start')
         if (textField.checkValidity() && datePicker.checkValidity()){
-            newEvent.end = newEvent.start
-            newEvent.timestamp = newEvent.start
             e.preventDefault()
             addEvent(newEvent)
         }
     }
     const onChange = (e) =>{
         setNewEvent({...newEvent, [e.target.name]: e.target.value})
+        console.log(newEvent)
     }
     const handleReset = (e) =>{
         setNewEvent(emptyEvent)
         navigate('/')
     }
     const addEvent = async (newEvent)=>{
+        var event = {...newEvent}
+        event['start'] = new Date(event.start).toISOString()
         const timeout = 8000;
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeout);
+        console.log(event)
         try {
                 const response = await fetch(process.env.REACT_APP_BACKEND_URL + "/events/", {
                     signal: controller.signal,
@@ -51,7 +50,7 @@ const NewEvent = () => {
                         Authorization : `Bearer ${auth.token}`,
 
                     },
-                    body:JSON.stringify(newEvent)
+                    body:JSON.stringify(event)
                     })
                     const data = await response.json()
 
@@ -77,8 +76,8 @@ const NewEvent = () => {
         
     
   return (
-    <div className="bg-stone-200 w-screen h-screen">
-    <div className='App max-w-6xl  mx-auto bg-aubergine p-8'>
+
+    <div className='bg-aubergine p-8'>
         <div>
             <h1 className='text-lg font-bold'>Neues Ereignis</h1>
         </div>
@@ -106,7 +105,6 @@ const NewEvent = () => {
                 
             </form>
         </div>
-    </div>
     </div>
   )
 }

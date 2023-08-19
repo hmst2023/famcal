@@ -1,8 +1,11 @@
 import * as React from "react";
+import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import DateCard from "./DateCard";
 import Cards from "./Cards";
 import useAuth from "../hooks/useAuth";
+import { ReactComponent as Add } from './add.svg';
+
 
 function DateList() {
   const {auth} = useAuth();
@@ -45,11 +48,13 @@ function DateList() {
   }
 
   useEffect(() => {
+    const date = new Date()
     fetch(process.env.REACT_APP_BACKEND_URL + "/events/", {
       method:"GET",
       headers: {
           "Content-Type": "application/json",
           Authorization : `Bearer ${auth['token']}`,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       }
   })
 
@@ -58,7 +63,8 @@ function DateList() {
   }, [auth])
   return (
     <div className="bg-stone-200">
-    <div className="max-w-6xl mx-auto">
+              <div className='fixed bottom-10 px-3 box-content h-12 w-12 md:h-24 md:w-24 py-3'><Link to="/new"><Add /></Link></div>
+
      {msgs.map((e1=>{
       return(
         <div>
@@ -73,7 +79,6 @@ function DateList() {
         </div>
       )
      }))}
-   </div>
    </div>
   );
 }

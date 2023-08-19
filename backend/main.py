@@ -1,11 +1,11 @@
 import os  # add for use with deta
 from fastapi import FastAPI
-import uvicorn
+# import uvicorn
 from pymongo import MongoClient
 from fastapi.middleware.cors import CORSMiddleware
 from routers.events import router as event_router
 from routers.users import router as user_router
-# from decouple import config # deactivate for use with deta
+# from decouple import config  # deactivate for use with deta
 
 
 app = FastAPI()
@@ -33,9 +33,9 @@ app.include_router(event_router, prefix="/events", tags=["events"])
 app.include_router(user_router, prefix="/users", tags=["users"])
 
 # deactivate for use with deta
-if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0", port=8000,
-        reload=True
-    )
+# if __name__ == "__main__":
+#     uvicorn.run(
+#         "main:app",
+#         host="0.0.0.0", port=8000,
+#         reload=True
+#     )

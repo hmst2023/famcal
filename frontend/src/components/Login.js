@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import useAuth from '../hooks/useAuth';
 
 
@@ -62,11 +62,15 @@ const Login = () => {
   };
 
   return (
-    <div className="bg-stone-200 w-screen h-screen">
-      <div className='App max-w-6xl  mx-auto bg-aubergine p-8'>
+      <div className='bg-aubergine p-8'>
+      <p className='text-xl font-bold'>
+            Melde dich bei deinem Account an
+            </p>
+        <p className='text-sm'>Kein Account? <Link to="/signup" className='text-blue-700'>Signup</Link></p>
+        <p>&nbsp;</p>
         <div className='flex'>
         <form onSubmit={onFormSubmit} onReset={onFormReset}>
-          E-Mail:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <input type="email" name="email" required/><br/>
+          E-Mail:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <input type="text" name="email" required/><br/>
           <p>&nbsp;</p>
           Passwort: &nbsp;&nbsp;<input type="password" name="password" required/><br/>
           <p className='text-right text-xs text-red-500'>&nbsp; {apiError}</p>
@@ -78,7 +82,6 @@ const Login = () => {
           </div>
         </form>
         </div>
-      </div>
     </div>
   )
 };

@@ -7,7 +7,8 @@ module.exports = {
   theme: {
     extend: {
       colors:{
-        'aubergine': '#a492aa'
+        'aubergine': '#a492aa',
+        'lilac':'#b79dc7'
       },
     },
   },
