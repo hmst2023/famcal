@@ -55,8 +55,7 @@ def show_events(request: Request, event_id: str, user_id=Depends(auth_handler.au
 
     msg_collection = request.app.db[str(current_user['fam'])]
     event = msg_collection.find_one({"_id": ObjectId(event_id)})
-    author = user_collection.find_one({'_id': event['author']})
-    event['author'] = author['username']
+
     if event is not None:
         return Event(**event)
     raise HTTPException(status_code=404, detail=f"Event with Id: {event_id} not found")
@@ -82,7 +81,7 @@ def create_event(request: Request, msg:Event = Body(...), user_id=Depends(auth_h
 
     msg = jsonable_encoder(msg)
     msg["timestamp"] = datetime.datetime.utcnow()
-    msg["author"] = ObjectId(user_id)
+    msg["author"] = current_user['username']
     msg["start"] = datetime.datetime.fromisoformat(msg["start"])
     msg["end"] = msg["start"]+datetime.timedelta(hours=2)
     new_msg = msg_collection.insert_one(msg)
@@ -92,14 +91,14 @@ def create_event(request: Request, msg:Event = Body(...), user_id=Depends(auth_h
 
 @router.patch("/event/{event_id}", response_description="Update event")
 def update_event(event_id: str, request:Request, event: EventUpdate = Body(...),
-                 user_id=Depends(auth_handler.auth_wrapper)) -> Event:
+                 user_id=Depends(auth_handler.auth_wrapper)) -> JSONResponse:
     user_collection = request.app.db[USER_COLLECTION]
     current_user = user_collection.find_one({'_id': ObjectId(user_id)})
     msg_collection = request.app.db[str(current_user['fam'])]
 
     msg = jsonable_encoder(event.dict(exclude_unset=True))
     msg["timestamp"] = datetime.datetime.utcnow()
-    msg["author"] = ObjectId(user_id)
+    msg["author"] = current_user['username']
     if "start" in msg:
         msg["start"] = datetime.datetime.fromisoformat(msg["start"])
     msg_collection.update_one({"_id":ObjectId(event_id)}, {"$set": msg})

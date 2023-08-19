@@ -113,7 +113,7 @@ async def propose_user(request: Request, userinfs: ProposalUser,
         body=html.replace("$$replace$$", "https://www.stucki.cc/calender/proposal/"+generated_magic_link),
         subtype=MessageType.html)
     fm = FastMail(conf)
-    # await fm.send_message(message)
+    await fm.send_message(message)
 
     entry['link'] = generated_magic_link
     entry['userId'] = proposed_user["_id"]
