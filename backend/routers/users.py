@@ -5,10 +5,13 @@ from fastapi.encoders import jsonable_encoder
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from fastapi.responses import JSONResponse
 from bson import ObjectId
-from .authentification import Authorization
-from .models import LoginBase, CurrentUser, UserBase, Proposal, ProposalUser,ProposalFam, AddOther, Disposal, ChangePass
+import httpx
 from secrets import token_urlsafe
-# from decouple import config  # deactivate for use with deta
+from decouple import config  # deactivate for use with deta
+from routers.authentification import Authorization
+from routers.models import LoginBase, CurrentUser, UserBase, Proposal, ProposalUser,ProposalFam, AddOther, Disposal, ChangePass
+from setup import DEVELOPER_MODE, SERVER_URL
+import unicodedata
 
 router = APIRouter()
 auth_handler = Authorization()
@@ -16,15 +19,20 @@ USER_COLLECTION = "users"
 FAM_COLLECTION = "fams"
 PROPOSAL_COLLECTION = 'proposals'
 
-MAIL_USERNAME = os.getenv("MAIL_USERNAME", "test")  # add for use with deta
-MAIL_PASSWORD = os.getenv("MAIL_PASSWORD", "test")  # add for use with deta
-MAIL_FROM = os.getenv("MAIL_FROM", "test")  # add for use with deta
-MAIL_SERVER = os.getenv("MAIL_SERVER", "test")  # add for use with deta
 
-# MAIL_USERNAME = config('MAIL_USERNAME', cast=str)  # deactivate for use with deta
-# MAIL_PASSWORD = config('MAIL_PASSWORD', cast=str)  # deactivate for use with deta
-# MAIL_FROM = config('MAIL_FROM', cast=str)  # deactivate for use with deta
-# MAIL_SERVER = config('MAIL_SERVER', cast=str)  # deactivate for use with deta
+encode_object_id = {ObjectId: lambda oid: str(oid)}
+
+
+if DEVELOPER_MODE:
+    MAIL_USERNAME = config('MAIL_USERNAME', cast=str)  # deactivate for use with deta
+    MAIL_PASSWORD = config('MAIL_PASSWORD', cast=str)  # deactivate for use with deta
+    MAIL_FROM = config('MAIL_FROM', cast=str)  # deactivate for use with deta
+    MAIL_SERVER = config('MAIL_SERVER', cast=str)  # deactivate for use with deta
+else:
+    MAIL_USERNAME = os.getenv("MAIL_USERNAME", "test")  # add for use with deta
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD", "test")  # add for use with deta
+    MAIL_FROM = os.getenv("MAIL_FROM", "test")  # add for use with deta
+    MAIL_SERVER = os.getenv("MAIL_SERVER", "test")  # add for use with deta
 
 
 conf = ConnectionConfig(
@@ -59,13 +67,13 @@ def change_pwd(request: Request, userinf: ChangePass, user_id=Depends(auth_handl
 
 
 @router.delete("/propose")
-async def depose_user(request: Request, userinfs: Disposal,
-                      user_id=Depends(auth_handler.auth_wrapper)) -> JSONResponse:
+async def depose_user(request: Request, user_id=Depends(auth_handler.auth_wrapper)) -> JSONResponse:
     user_collection = request.app.db[USER_COLLECTION]
     fam_collection = request.app.db[FAM_COLLECTION]
 
     current_user = user_collection.find_one({'_id': ObjectId(user_id)})
-    user_for_disposal = user_collection.find_one({'username': userinfs.username, 'fam':current_user['fam']})
+    userinfs = request.headers['user']
+    user_for_disposal = user_collection.find_one({'username': userinfs, 'fam':current_user['fam']})
 
     if user_for_disposal['admin']:
         raise HTTPException(status_code=400, detail='Admin cannot be deleted, drop collection instead')
@@ -106,14 +114,14 @@ async def propose_user(request: Request, userinfs: ProposalUser,
         raise HTTPException(status_code=409, detail='Mail address already taken')
 
     generated_magic_link = (token_urlsafe(64))
-
-    message = MessageSchema(
-        subject="Fasti - Familienkalender registration process",
-        recipients=[userinfs.dict().get("email")],
-        body=html.replace("$$replace$$", "https://www.stucki.cc/calender/proposal/"+generated_magic_link),
-        subtype=MessageType.html)
-    fm = FastMail(conf)
-    await fm.send_message(message)
+    if not DEVELOPER_MODE:
+        message = MessageSchema(
+            subject="Fasti - Familienkalender registration process",
+            recipients=[userinfs.dict().get("email")],
+            body=html.replace("$$replace$$", "https://www.stucki.cc/calender/proposal/"+generated_magic_link),
+            subtype=MessageType.html)
+        fm = FastMail(conf)
+        await fm.send_message(message)
 
     entry['link'] = generated_magic_link
     entry['userId'] = proposed_user["_id"]
@@ -121,7 +129,8 @@ async def propose_user(request: Request, userinfs: ProposalUser,
     entry['createdAt'] = datetime.datetime.utcnow()
     new_proposal = proposal_collection.insert_one(entry)
     created_msg = proposal_collection.find_one({"_id": new_proposal.inserted_id})
-    return JSONResponse(status_code=status.HTTP_201_CREATED, content=str(created_msg))
+    return JSONResponse(status_code=status.HTTP_201_CREATED,
+                        content=jsonable_encoder(created_msg, custom_encoder=encode_object_id))
 
 
 @router.post("/proposefam")
@@ -138,20 +147,21 @@ async def propose_new_family(request: Request, userinfs: ProposalFam) -> JSONRes
         raise HTTPException(status_code=409, detail='Mail address already taken')
 
     generated_magic_link = (token_urlsafe(64))
-
-    message = MessageSchema(
-        subject="Fasti - Familienkalender registration process",
-        recipients=[userinfs.dict().get("email")],
-        body=html.replace("$$replace$$", "https://www.stucki.cc/calender/proposal/"+generated_magic_link),
-        subtype=MessageType.html)
-    fm = FastMail(conf)
-    await fm.send_message(message)
+    if not DEVELOPER_MODE:
+        message = MessageSchema(
+            subject="Fasti - Familienkalender registration process",
+            recipients=[userinfs.dict().get("email")],
+            body=html.replace("$$replace$$", "https://www.stucki.cc/calender/proposal/"+generated_magic_link),
+            subtype=MessageType.html)
+        fm = FastMail(conf)
+        await fm.send_message(message)
 
     entry['link'] = generated_magic_link
     entry['createdAt'] = datetime.datetime.utcnow()
     new_proposal = proposal_collection.insert_one(entry)
     created_msg = proposal_collection.find_one({"_id": new_proposal.inserted_id})
-    return JSONResponse(status_code=status.HTTP_201_CREATED, content=str(created_msg))
+    return JSONResponse(status_code=status.HTTP_201_CREATED,
+                        content=jsonable_encoder(created_msg, custom_encoder=encode_object_id))
 
 
 @router.delete("/proposefam")
@@ -207,6 +217,7 @@ def me(request: Request, user_id=Depends(auth_handler.auth_wrapper)) -> JSONResp
 
 @router.post('/register', response_description='Register user')
 def register(request: Request, new_user:UserBase = Body(...)) -> JSONResponse:
+    unhashed_password = new_user.password
     new_user = new_user.dict(exclude_unset=True)
     link = new_user.pop("link")
     proposal_collection = request.app.db[PROPOSAL_COLLECTION]
@@ -234,6 +245,12 @@ def register(request: Request, new_user:UserBase = Body(...)) -> JSONResponse:
         added_user = user_collection.insert_one(new_user)
         new_user['_id'] = added_user.inserted_id
         # add here create collection through first post, add index
+        token = auth_handler.encode_token(str(new_user["_id"]))
+        httpx.post(f"{SERVER_URL}/events/", headers={"Authorization": f"Bearer {token}"},
+                   json={"channel":new_user["username"], "start":datetime.datetime.utcnow().isoformat(),
+                         "text": f"Hallo! \nErstelle deine Familie, indem du oben auf {new_user['username']} und dann auf Einstellung klickst. \nViel Spaß 🚀"})
+        msg_collection = request.app.db[str(new_user['fam'])]
+        msg_collection.create_index("end", expireAfterSeconds=172800)
 
     else:
         new_user['fam'] = proposal['fam']
@@ -247,8 +264,7 @@ def register(request: Request, new_user:UserBase = Body(...)) -> JSONResponse:
 
     fam_collection.update_one({"_id": ObjectId(new_user['fam'])}, {"$set": {f"users.{new_user['username']}":new_user["_id"]}})
 
-    created_user = user_collection.find_one({"_id": new_user['_id']})
-    return JSONResponse(status_code=status.HTTP_201_CREATED, content=str(created_user))
+    return login(request, LoginBase(**{'email': new_user['email'], 'password': unhashed_password}))
 
 
 @router.post('/add', response_description='add new passive user')
@@ -266,14 +282,15 @@ def add_other(request: Request, new_other: AddOther = Body(...), user_id=Depends
 
     if len(current_fam['users'])+len(current_fam['others'])>7:
         raise HTTPException(status_code=409, detail="Group size cannot exceed 8 people")
-    user = user_collection.insert_one({'username':new_other.name, 'fam':ObjectId(current_user['fam'])}) # edit
+    user = user_collection.insert_one({'username':new_other.name, 'fam':ObjectId(current_user['fam'])})  # edit
     fam_collection.update_one({"_id": ObjectId(current_user['fam'])},
                               {"$set": {f"others.{new_other.name}": ObjectId(user.inserted_id)}})
     return JSONResponse(status_code=status.HTTP_201_CREATED, content=f'added {new_other.name}')
 
 
 @router.delete('/add', response_description='remove passive user')
-def add_other(request: Request, new_other: AddOther = Body(...), user_id=Depends(auth_handler.auth_wrapper)) -> JSONResponse:
+def add_other(request: Request,user_id=Depends(auth_handler.auth_wrapper)) -> JSONResponse:
+    other = request.headers['other']
     user_collection = request.app.db[USER_COLLECTION]
     proposal_collection = request.app.db[PROPOSAL_COLLECTION]
 
@@ -282,16 +299,16 @@ def add_other(request: Request, new_other: AddOther = Body(...), user_id=Depends
         raise HTTPException(status_code=403, detail='You must be fam-admin!')
     fam_collection = request.app.db[FAM_COLLECTION]
     current_fam = fam_collection.find_one({'_id': ObjectId(current_user['fam'])})
-    if new_other.name not in current_fam['others']:
+    if other not in current_fam['others']:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Name not found')
-    id_for_deletion = current_fam['others'][new_other.name]
+    id_for_deletion = current_fam['others'][other]
     fam_collection.update_one({"_id": ObjectId(current_user['fam'])},
-                              {"$unset": {f"others.{new_other.name}": ""}})
+                              {"$unset": {f"others.{other}": ""}})
     user_collection.delete_one({"_id": id_for_deletion})
     check_for_proposals = proposal_collection.find_one({'userId': id_for_deletion})
     if check_for_proposals is not None:
         proposal_collection.delete_one({'userId': id_for_deletion})
-    return JSONResponse(status_code=status.HTTP_202_ACCEPTED, content=f'deleted {new_other.name}')
+    return JSONResponse(status_code=status.HTTP_202_ACCEPTED, content=f'deleted {other}')
 
 
 @router.get('/setup', response_description='admin family setup data')

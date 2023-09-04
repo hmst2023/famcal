@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import {Link} from "react-router-dom";
 import useAuth from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { ReactComponent as Logo } from './logo.svg';
+import { ReactComponent as Logo } from './logo3.svg';
 
 const Header = () => {
   const {auth, setAuth} = useAuth();

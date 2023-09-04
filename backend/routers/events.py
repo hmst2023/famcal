@@ -4,8 +4,8 @@ from fastapi.responses import JSONResponse
 from typing import List
 import datetime
 from bson import ObjectId
-from .authentification import Authorization
-from .models import DateWithId, Event, EventUpdate
+from routers.authentification import Authorization
+from routers.models import DateWithId, Event, EventUpdate
 from pytz import timezone
 
 router = APIRouter()
@@ -101,6 +101,7 @@ def update_event(event_id: str, request:Request, event: EventUpdate = Body(...),
     msg["author"] = current_user['username']
     if "start" in msg:
         msg["start"] = datetime.datetime.fromisoformat(msg["start"])
+        msg["end"] = msg["start"]+datetime.timedelta(hours=2)
     msg_collection.update_one({"_id":ObjectId(event_id)}, {"$set": msg})
     event = msg_collection.find_one({"_id":ObjectId(event_id)})
     if event is not None:

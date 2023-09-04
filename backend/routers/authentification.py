@@ -4,16 +4,19 @@ from fastapi import HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
-# from decouple import config # deactivate for use with deta
+from decouple import config  # deactivate for use with deta
+from setup import DEVELOPER_MODE
 
-# SECRET_STRING = config('SECRET_STRING', cast=str) # deactivate for use with deta
+if DEVELOPER_MODE:
+    SECRET_STRING = config('SECRET_STRING', cast=str)  # deactivate for use with deta
+else:
+    SECRET_STRING = os.getenv("SECRET_STRING", "test")
 
 
 class Authorization:
     security = HTTPBearer()
     pwd_context = CryptContext(schemes=['bcrypt'], deprecated="auto")
-    secret = os.getenv("SECRET_STRING","test")  # add for use with deta
-    # secret = SECRET_STRING # deactivate for use with deta
+    secret = SECRET_STRING
 
     def get_password_hash(self, password):
         return self.pwd_context.hash(password)

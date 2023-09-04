@@ -6,3 +6,4 @@ __init__.py
 Spacefile
 .space/
 copy_db.py
+.pytest_cache

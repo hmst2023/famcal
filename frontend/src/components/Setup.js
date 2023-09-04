@@ -155,8 +155,9 @@ const Setup = () => {
             headers:{
                 "Content-Type":"application/json",
                 Authorization : `Bearer ${auth.token}`,
-            },
-            body:JSON.stringify(dict)});
+                other: dict.name
+            }
+            });
             if (response.ok){
               var blubb = auth
               var index = blubb.members.indexOf(dict.name)
@@ -191,8 +192,9 @@ const Setup = () => {
           headers:{
               "Content-Type":"application/json",
               Authorization : `Bearer ${auth.token}`,
-          },
-          body:JSON.stringify(dict)});
+              user: dict.username
+          }
+          });
           if (response.ok){
             setRefreshFetch(!refreshFetch)
           } else{

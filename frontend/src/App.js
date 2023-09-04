@@ -12,6 +12,7 @@ import Signup from './components/Signup'
 import TermsOfUse from './components/TermsOfUse'
 import Datenschutz from './components/Datenschutz'
 import Impressum from './components/Impressum'
+import NotFound from './components/NotFound'
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="termsofuse" element={<TermsOfUse/>}/>
         <Route path='datenschutz' element={<Datenschutz/>}/>
         <Route path='impressum' element={<Impressum/>}/>
+        <Route path="*" element={<NotFound/>} status={"404"}/>
 
         <Route element={<RequiredAuthentication />}>
           <Route path="/" element={<DateList/>}/>
@@ -31,6 +33,7 @@ function App() {
           <Route path="/setup" element={<Setup/>}/>
         </Route>
       </Route>
+      
     </Routes>
   );
 }

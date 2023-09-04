@@ -2,14 +2,33 @@ import React from 'react'
 import { useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import useAuth from '../hooks/useAuth';
 
 
 const Propose = () => {
     const {link} = useParams();
     const [error, setError] = useState();
+    const { setAuth } = useAuth();
     const [proposal, setProposal] = useState({username:'', email:''});
 
     let navigate = useNavigate();
+
+    const getUserData =  (token) => {
+      fetch(process.env.REACT_APP_BACKEND_URL + "/users/me", {
+          method:"GET",
+          headers: {
+              "Content-Type": "application/json",
+              Authorization : `Bearer ${token}`,
+          }
+      })
+      .then((response) => response.json())
+      .then((data) => {
+        var test = data;
+        test["token"] = token;
+        setAuth(test);
+        navigate("/", {replace:true});
+      })
+    };
 
     const getProposal = async()=>{
         const timeout = 8000;
@@ -64,7 +83,9 @@ const Propose = () => {
         body: JSON.stringify(dict)
         })
         if (res.ok){
-            navigate('/',{replace:true})
+          const token = await res.json()
+          await getUserData(token["token"])
+
         } else {
           let errorResponse = await res.json();
           setError(errorResponse["detail"])
