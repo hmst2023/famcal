@@ -31,7 +31,7 @@ const Propose = () => {
     };
 
     const getProposal = async()=>{
-        const timeout = 8000;
+        const timeout = 12000;
         const controller = new AbortController();
         const id2 = setTimeout(() => controller.abort(), timeout);
         try {

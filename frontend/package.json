@@ -1,6 +1,6 @@
 {
   "name": "calender",
-  "homepage": "http://www.stucki.cc/calender/",
+  "homepage": "http://www.stucki.cc/cal/",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

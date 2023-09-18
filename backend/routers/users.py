@@ -48,7 +48,7 @@ conf = ConnectionConfig(
 )
 
 html = """
-<p>Thanks for registering on Famplan. Click on the link below to complete the registration process.</p>
+<p>Thanks for registering on Fasti. Click on the link below to complete the registration process.</p>
 <p><a href="$$replace$$">$$replace$$</a></p>
 <p>If your mailaddress was not added on purpose, you can just sit back and relax. Your address will be removed in 24 hours.</p>
 <p>
@@ -116,9 +116,9 @@ async def propose_user(request: Request, userinfs: ProposalUser,
     generated_magic_link = (token_urlsafe(64))
     if not DEVELOPER_MODE:
         message = MessageSchema(
-            subject="Fasti - Familienkalender registration process",
+            subject="Fasti - Familienkalender Registrierungsprozess",
             recipients=[userinfs.dict().get("email")],
-            body=html.replace("$$replace$$", "https://www.stucki.cc/calender/proposal/"+generated_magic_link),
+            body=html.replace("$$replace$$", "https://fasti.family/cal/proposal/"+generated_magic_link),
             subtype=MessageType.html)
         fm = FastMail(conf)
         await fm.send_message(message)
@@ -149,9 +149,9 @@ async def propose_new_family(request: Request, userinfs: ProposalFam) -> JSONRes
     generated_magic_link = (token_urlsafe(64))
     if not DEVELOPER_MODE:
         message = MessageSchema(
-            subject="Fasti - Familienkalender registration process",
+            subject="Fasti - Familienkalender Registrierungsprozess",
             recipients=[userinfs.dict().get("email")],
-            body=html.replace("$$replace$$", "https://www.stucki.cc/calender/proposal/"+generated_magic_link),
+            body=html.replace("$$replace$$", "https://fasti.family/cal/proposal/"+generated_magic_link),
             subtype=MessageType.html)
         fm = FastMail(conf)
         await fm.send_message(message)
@@ -244,7 +244,6 @@ def register(request: Request, new_user:UserBase = Body(...)) -> JSONResponse:
         new_user['admin'] = True
         added_user = user_collection.insert_one(new_user)
         new_user['_id'] = added_user.inserted_id
-        # add here create collection through first post, add index
         token = auth_handler.encode_token(str(new_user["_id"]))
         httpx.post(f"{SERVER_URL}/events/", headers={"Authorization": f"Bearer {token}"},
                    json={"channel":new_user["username"], "start":datetime.datetime.utcnow().isoformat(),
@@ -263,8 +262,8 @@ def register(request: Request, new_user:UserBase = Body(...)) -> JSONResponse:
     proposal_collection.delete_one({"link": link})
 
     fam_collection.update_one({"_id": ObjectId(new_user['fam'])}, {"$set": {f"users.{new_user['username']}":new_user["_id"]}})
-
-    return login(request, LoginBase(**{'email': new_user['email'], 'password': unhashed_password}))
+    response = login(request, LoginBase(**{'email': new_user['email'], 'password': unhashed_password}))
+    return response
 
 
 @router.post('/add', response_description='add new passive user')

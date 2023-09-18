@@ -2,7 +2,6 @@ import datetime
 
 from fastapi.testclient import TestClient
 from pymongo import MongoClient
-from decouple import config
 from main import app, DB_URL, DB_NAME
 
 app.client = MongoClient(DB_URL)
@@ -12,8 +11,6 @@ client = TestClient(app)
 client.email = "mail_tester@stucki.cc"
 client.password = "test"
 client.username = "tester"
-TEST_LOGIN = config('TEST_LOGIN', cast=str)
-TEST_PASSWORD = config('TEST_PASSWORD', cast=str)
 
 
 def test_false_url():

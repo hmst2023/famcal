@@ -1,0 +1,5 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Disallow: /cal/proposal/
+Disallow: /cal/event/
+Sitemap: https://fasti.family/sitemap.xml

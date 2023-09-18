@@ -24,8 +24,6 @@ else:
 def startup():
     app.client = MongoClient(DB_URL)
     app.db = app.client[DB_NAME]
-    # collection = "64e0a9de3bc7dd70d30db651"
-    # app.db[collection].create_index("end", expireAfterSeconds=86400)
 
 
 @app.on_event("shutdown")
