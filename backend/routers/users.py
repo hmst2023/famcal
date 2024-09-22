@@ -1,6 +1,6 @@
 import os  # add for use with deta
 import datetime
-from fastapi import Body, status, HTTPException, Depends, APIRouter, Request
+from fastapi import APIRouter, HTTPException, Body, status, HTTPException, Depends, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from fastapi.responses import JSONResponse
@@ -11,7 +11,8 @@ from decouple import config  # deactivate for use with deta
 from routers.authentification import Authorization
 from routers.models import LoginBase, CurrentUser, UserBase, Proposal, ProposalUser,ProposalFam, AddOther, Disposal, ChangePass
 from setup import DEVELOPER_MODE, SERVER_URL
-import unicodedata
+from routers.access_db import database
+
 
 router = APIRouter()
 auth_handler = Authorization()
@@ -23,16 +24,10 @@ PROPOSAL_COLLECTION = 'proposals'
 encode_object_id = {ObjectId: lambda oid: str(oid)}
 
 
-if DEVELOPER_MODE:
-    MAIL_USERNAME = config('MAIL_USERNAME', cast=str)  # deactivate for use with deta
-    MAIL_PASSWORD = config('MAIL_PASSWORD', cast=str)  # deactivate for use with deta
-    MAIL_FROM = config('MAIL_FROM', cast=str)  # deactivate for use with deta
-    MAIL_SERVER = config('MAIL_SERVER', cast=str)  # deactivate for use with deta
-else:
-    MAIL_USERNAME = os.getenv("MAIL_USERNAME", "test")  # add for use with deta
-    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD", "test")  # add for use with deta
-    MAIL_FROM = os.getenv("MAIL_FROM", "test")  # add for use with deta
-    MAIL_SERVER = os.getenv("MAIL_SERVER", "test")  # add for use with deta
+MAIL_USERNAME = config('MAIL_USERNAME', cast=str)  # deactivate for use with deta
+MAIL_PASSWORD = config('MAIL_PASSWORD', cast=str)  # deactivate for use with deta
+MAIL_FROM = config('MAIL_FROM', cast=str)  # deactivate for use with deta
+MAIL_SERVER = config('MAIL_SERVER', cast=str)  # deactivate for use with deta
 
 
 conf = ConnectionConfig(
@@ -56,8 +51,8 @@ html = """
 
 
 @router.patch("/change_pass")
-def change_pwd(request: Request, userinf: ChangePass, user_id=Depends(auth_handler.auth_wrapper)) -> JSONResponse:
-    user_collection = request.app.db[USER_COLLECTION]
+def change_pwd(userinf: ChangePass, user_id=Depends(auth_handler.auth_wrapper), db=Depends(database)) -> JSONResponse:
+    user_collection = db[USER_COLLECTION]
     current_user = user_collection.find_one({'_id': ObjectId(user_id)})
     if not auth_handler.verify_password(userinf.old, current_user['password']):
         raise HTTPException(status_code=403)
@@ -67,9 +62,9 @@ def change_pwd(request: Request, userinf: ChangePass, user_id=Depends(auth_handl
 
 
 @router.delete("/propose")
-async def depose_user(request: Request, user_id=Depends(auth_handler.auth_wrapper)) -> JSONResponse:
-    user_collection = request.app.db[USER_COLLECTION]
-    fam_collection = request.app.db[FAM_COLLECTION]
+async def depose_user(request:Request, user_id=Depends(auth_handler.auth_wrapper), db=Depends(database)) -> JSONResponse:
+    user_collection = db[USER_COLLECTION]
+    fam_collection = db[FAM_COLLECTION]
 
     current_user = user_collection.find_one({'_id': ObjectId(user_id)})
     userinfs = request.headers['user']
@@ -90,11 +85,11 @@ async def depose_user(request: Request, user_id=Depends(auth_handler.auth_wrappe
 
 
 @router.post("/propose")
-async def propose_user(request: Request, userinfs: ProposalUser,
-                       user_id=Depends(auth_handler.auth_wrapper)) -> JSONResponse:
+async def propose_user(userinfs: ProposalUser,
+                       user_id=Depends(auth_handler.auth_wrapper), db=Depends(database)) -> JSONResponse:
 
-    user_collection = request.app.db[USER_COLLECTION]
-    proposal_collection = request.app.db[PROPOSAL_COLLECTION]
+    user_collection = db[USER_COLLECTION]
+    proposal_collection = db[PROPOSAL_COLLECTION]
 
     current_user = user_collection.find_one({'_id': ObjectId(user_id)})
     proposed_user = user_collection.find_one({'fam': current_user['fam'], 'username': userinfs.username })
@@ -134,10 +129,10 @@ async def propose_user(request: Request, userinfs: ProposalUser,
 
 
 @router.post("/proposefam")
-async def propose_new_family(request: Request, userinfs: ProposalFam) -> JSONResponse:
+async def propose_new_family(userinfs: ProposalFam, db=Depends(database)) -> JSONResponse:
 
-    user_collection = request.app.db[USER_COLLECTION]
-    proposal_collection = request.app.db[PROPOSAL_COLLECTION]
+    user_collection = db[USER_COLLECTION]
+    proposal_collection = db[PROPOSAL_COLLECTION]
 
     entry = userinfs.dict()
     entry['email'] = entry['email'].lower()
@@ -165,13 +160,13 @@ async def propose_new_family(request: Request, userinfs: ProposalFam) -> JSONRes
 
 
 @router.delete("/proposefam")
-async def delete_family(request: Request, user_id=Depends(auth_handler.auth_wrapper)) -> JSONResponse:
-    user_collection = request.app.db[USER_COLLECTION]
-    fam_collection = request.app.db[FAM_COLLECTION]
+async def delete_family(user_id=Depends(auth_handler.auth_wrapper), db=Depends(database)) -> JSONResponse:
+    user_collection = db[USER_COLLECTION]
+    fam_collection = db[FAM_COLLECTION]
 
     current_user = user_collection.find_one({'_id': ObjectId(user_id)})
     current_fam = fam_collection.find_one({'_id': current_user['fam']})
-    msg_collection = request.app.db[str(current_user['fam'])]
+    msg_collection = db[str(current_user['fam'])]
 
     if not current_user['admin']:
         raise HTTPException(status_code=403, detail='You must be fam-admin!')
@@ -185,8 +180,8 @@ async def delete_family(request: Request, user_id=Depends(auth_handler.auth_wrap
 
 
 @router.get("/proposal/{link}", response_description="List single event")
-def show_proposal(request: Request, link: str) -> Proposal:
-    msg_collection = request.app.db[PROPOSAL_COLLECTION]
+def show_proposal(link: str, db=Depends(database)) -> Proposal:
+    msg_collection = db[PROPOSAL_COLLECTION]
     proposal = msg_collection.find_one({"link": link})
     if proposal is not None:
         return Proposal(**proposal)
@@ -194,8 +189,8 @@ def show_proposal(request: Request, link: str) -> Proposal:
 
 
 @router.post('/login', response_description='login user')
-def login(request: Request, login_user: LoginBase = Body(...)) -> JSONResponse:
-    user_collection = request.app.db[USER_COLLECTION]
+def login(login_user: LoginBase = Body(...), db=Depends(database)) -> JSONResponse:
+    user_collection = db[USER_COLLECTION]
     user = user_collection.find_one({'email': login_user.email.lower()})
     if (user is None) or (not auth_handler.verify_password(login_user.password, user['password'])):
         raise HTTPException(status_code=401, detail='wrong password')
@@ -205,9 +200,9 @@ def login(request: Request, login_user: LoginBase = Body(...)) -> JSONResponse:
 
 
 @router.get('/me', response_description='Logged in user data')
-def me(request: Request, user_id=Depends(auth_handler.auth_wrapper)) -> JSONResponse:
-    user_collection = request.app.db[USER_COLLECTION]
-    fam_collection = request.app.db[FAM_COLLECTION]
+def me(user_id=Depends(auth_handler.auth_wrapper), db=Depends(database)) -> JSONResponse:
+    user_collection = db[USER_COLLECTION]
+    fam_collection = db[FAM_COLLECTION]
     current_user = user_collection.find_one({'_id': ObjectId(user_id)})
     user_infs = CurrentUser(**current_user).dict()
     members = fam_collection.find_one({'_id': ObjectId(current_user['fam'])})
@@ -216,11 +211,10 @@ def me(request: Request, user_id=Depends(auth_handler.auth_wrapper)) -> JSONResp
 
 
 @router.post('/register', response_description='Register user')
-def register(request: Request, new_user:UserBase = Body(...)) -> JSONResponse:
-    unhashed_password = new_user.password
+def register(new_user:UserBase = Body(...), db=Depends(database)) -> JSONResponse:
     new_user = new_user.dict(exclude_unset=True)
     link = new_user.pop("link")
-    proposal_collection = request.app.db[PROPOSAL_COLLECTION]
+    proposal_collection = db[PROPOSAL_COLLECTION]
     proposal = proposal_collection.find_one({"link": link})
     if proposal is None:
         raise HTTPException(status_code=404, detail=f"No proposal for {link} !")
@@ -235,8 +229,8 @@ def register(request: Request, new_user:UserBase = Body(...)) -> JSONResponse:
     if 'username' in proposal:
         new_user['username'] = proposal['username']
 
-    user_collection = request.app.db[USER_COLLECTION]
-    fam_collection = request.app.db[FAM_COLLECTION]
+    user_collection = db[USER_COLLECTION]
+    fam_collection = db[FAM_COLLECTION]
 
     if 'fam' not in proposal:
         new_fam = fam_collection.insert_one({'users': {new_user['username']: 'userObjectId'}, 'others': {}})
@@ -248,7 +242,7 @@ def register(request: Request, new_user:UserBase = Body(...)) -> JSONResponse:
         httpx.post(f"{SERVER_URL}/events/", headers={"Authorization": f"Bearer {token}"},
                    json={"channel":new_user["username"], "start":datetime.datetime.utcnow().isoformat(),
                          "text": f"Hallo! \nErstelle deine Familie, indem du oben auf {new_user['username']} und dann auf Einstellung klickst. \nViel Spaß 🚀"})
-        msg_collection = request.app.db[str(new_user['fam'])]
+        msg_collection = db[str(new_user['fam'])]
         msg_collection.create_index("end", expireAfterSeconds=172800)
 
     else:
@@ -262,19 +256,19 @@ def register(request: Request, new_user:UserBase = Body(...)) -> JSONResponse:
     proposal_collection.delete_one({"link": link})
 
     fam_collection.update_one({"_id": ObjectId(new_user['fam'])}, {"$set": {f"users.{new_user['username']}":new_user["_id"]}})
-    response = login(request, LoginBase(**{'email': new_user['email'], 'password': unhashed_password}))
-    return response
+    token = auth_handler.encode_token(str(new_user["_id"]))
+    return JSONResponse(content={"token":token})
 
 
 @router.post('/add', response_description='add new passive user')
-def add_other(request: Request, new_other: AddOther = Body(...), user_id=Depends(auth_handler.auth_wrapper)) \
+def add_other(new_other: AddOther = Body(...), db=Depends(database), user_id=Depends(auth_handler.auth_wrapper)) \
         -> JSONResponse:
 
-    user_collection = request.app.db[USER_COLLECTION]
+    user_collection = db[USER_COLLECTION]
     current_user = user_collection.find_one({'_id': ObjectId(user_id)})
     if not current_user['admin']:
         raise HTTPException(status_code=403, detail='You must be fam-admin!')
-    fam_collection = request.app.db[FAM_COLLECTION]
+    fam_collection = db[FAM_COLLECTION]
     current_fam = fam_collection.find_one({'_id': ObjectId(current_user['fam'])})
     if new_other.name in [i for i in current_fam['users'].keys()] + [i for i in current_fam['others'].keys()]:
         raise HTTPException(status_code=409, detail='Name already taken')
@@ -288,15 +282,15 @@ def add_other(request: Request, new_other: AddOther = Body(...), user_id=Depends
 
 
 @router.delete('/add', response_description='remove passive user')
-def add_other(request: Request,user_id=Depends(auth_handler.auth_wrapper)) -> JSONResponse:
+def add_other(request: Request, db=Depends(database), user_id=Depends(auth_handler.auth_wrapper)) -> JSONResponse:
     other = request.headers['other']
-    user_collection = request.app.db[USER_COLLECTION]
-    proposal_collection = request.app.db[PROPOSAL_COLLECTION]
+    user_collection = db[USER_COLLECTION]
+    proposal_collection = db[PROPOSAL_COLLECTION]
 
     current_user = user_collection.find_one({'_id': ObjectId(user_id)})
     if not current_user['admin']:
         raise HTTPException(status_code=403, detail='You must be fam-admin!')
-    fam_collection = request.app.db[FAM_COLLECTION]
+    fam_collection = db[FAM_COLLECTION]
     current_fam = fam_collection.find_one({'_id': ObjectId(current_user['fam'])})
     if other not in current_fam['others']:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Name not found')
@@ -311,9 +305,9 @@ def add_other(request: Request,user_id=Depends(auth_handler.auth_wrapper)) -> JS
 
 
 @router.get('/setup', response_description='admin family setup data')
-def me(request: Request, user_id=Depends(auth_handler.auth_wrapper)) -> JSONResponse:
-    user_collection = request.app.db[USER_COLLECTION]
-    fam_collection = request.app.db[FAM_COLLECTION]
+def me(user_id=Depends(auth_handler.auth_wrapper), db=Depends(database)) -> JSONResponse:
+    user_collection = db[USER_COLLECTION]
+    fam_collection = db[FAM_COLLECTION]
     current_user = user_collection.find_one({'_id': ObjectId(user_id)})
     if not current_user['admin']:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='You must be fam-admin!')
@@ -325,3 +319,11 @@ def me(request: Request, user_id=Depends(auth_handler.auth_wrapper)) -> JSONResp
 
     member_wo_id = {'users': name_email_list, 'others':list(members['others'].keys())}
     return JSONResponse(status_code=status.HTTP_200_OK, content=member_wo_id)
+
+
+@router.get('/refreshToken')
+async def refresh_token(user_id=Depends(auth_handler.auth_wrapper), db=Depends(database)) -> JSONResponse:
+    db_user = db[USER_COLLECTION]
+    user = db_user.find_one({'_id':ObjectId(user_id)})
+    token = auth_handler.encode_token(str(user['_id']))
+    return JSONResponse(content={"token": token})

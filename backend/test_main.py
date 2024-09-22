@@ -57,7 +57,6 @@ def test_me():
     assert response.status_code == 200
 
 
-
 def test_post_event():
     response = client.post("/events/",
                            headers={"Content-Type": "application/json", "Authorization": f"Bearer {client.token}"},

@@ -6,6 +6,7 @@ import datetime
 from bson import ObjectId
 from routers.authentification import Authorization
 from routers.models import DateWithId, Event, EventUpdate
+from routers.access_db import database
 from pytz import timezone
 
 router = APIRouter()
@@ -14,12 +15,13 @@ USER_COLLECTION = "users"
 
 
 @router.get("/", response_description="List all events")
-def list_all_events(request:Request, user_id=Depends(auth_handler.auth_wrapper)) -> List[DateWithId]:
+def list_all_events(request:Request, user_id=Depends(auth_handler.auth_wrapper),
+                    db=Depends(database)) -> List[DateWithId]:
     user_timezone = timezone(request.headers['timezone'])
 
-    user_collection = request.app.db[USER_COLLECTION]
+    user_collection = db[USER_COLLECTION]
     current_user = user_collection.find_one({'_id': ObjectId(user_id)})
-    msg_collection = request.app.db[str(current_user['fam'])]
+    msg_collection = db[str(current_user['fam'])]
 
     utc = datetime.datetime.now(datetime.timezone.utc)
     local_time = utc.astimezone(user_timezone)
@@ -49,11 +51,11 @@ def list_all_events(request:Request, user_id=Depends(auth_handler.auth_wrapper))
 
 
 @router.get("/event/{event_id}", response_description="List single event")
-def show_events(request: Request, event_id: str, user_id=Depends(auth_handler.auth_wrapper)) -> Event:
-    user_collection = request.app.db[USER_COLLECTION]
+def show_events(event_id: str, user_id=Depends(auth_handler.auth_wrapper), db=Depends(database)) -> Event:
+    user_collection = db[USER_COLLECTION]
     current_user = user_collection.find_one({'_id': ObjectId(user_id)})
 
-    msg_collection = request.app.db[str(current_user['fam'])]
+    msg_collection = db[str(current_user['fam'])]
     event = msg_collection.find_one({"_id": ObjectId(event_id)})
 
     if event is not None:
@@ -62,10 +64,10 @@ def show_events(request: Request, event_id: str, user_id=Depends(auth_handler.au
 
 
 @router.delete("/event/{event_id}", response_description="Delete Event")
-def delete_event(request: Request, event_id: str, user_id=Depends(auth_handler.auth_wrapper)) -> JSONResponse:
-    user_collection = request.app.db[USER_COLLECTION]
+def delete_event(event_id: str, user_id=Depends(auth_handler.auth_wrapper), db=Depends(database)) -> JSONResponse:
+    user_collection = db[USER_COLLECTION]
     current_user = user_collection.find_one({'_id': ObjectId(user_id)})
-    msg_collection = request.app.db[str(current_user['fam'])]
+    msg_collection = db[str(current_user['fam'])]
 
     delete_result = msg_collection.delete_one({"_id":ObjectId(event_id)})
     if delete_result.deleted_count == 1:
@@ -74,27 +76,28 @@ def delete_event(request: Request, event_id: str, user_id=Depends(auth_handler.a
 
 
 @router.post("/", response_description="Add new entry")
-def create_event(request: Request, msg:Event = Body(...), user_id=Depends(auth_handler.auth_wrapper)) -> JSONResponse:
-    user_collection = request.app.db[USER_COLLECTION]
+def create_event(msg:Event = Body(...), user_id=Depends(auth_handler.auth_wrapper),
+                 db=Depends(database)) -> JSONResponse:
+    user_collection = db[USER_COLLECTION]
     current_user = user_collection.find_one({'_id': ObjectId(user_id)})
-    msg_collection = request.app.db[str(current_user['fam'])]
+    msg_collection = db[str(current_user['fam'])]
 
     msg = jsonable_encoder(msg)
     msg["timestamp"] = datetime.datetime.utcnow()
     msg["author"] = current_user['username']
     msg["start"] = datetime.datetime.fromisoformat(msg["start"])
-    msg["end"] = msg["start"]+datetime.timedelta(hours=2)
+    msg["end"] = msg["start"] + datetime.timedelta(hours=2)
     new_msg = msg_collection.insert_one(msg)
     created_msg = msg_collection.find_one({"_id": new_msg.inserted_id})
     return JSONResponse(status_code=status.HTTP_201_CREATED, content=str(created_msg))
 
 
 @router.patch("/event/{event_id}", response_description="Update event")
-def update_event(event_id: str, request:Request, event: EventUpdate = Body(...),
-                 user_id=Depends(auth_handler.auth_wrapper)) -> JSONResponse:
-    user_collection = request.app.db[USER_COLLECTION]
+def update_event(event_id: str, event: EventUpdate = Body(...),
+                 user_id=Depends(auth_handler.auth_wrapper), db=Depends(database)) -> JSONResponse:
+    user_collection = db[USER_COLLECTION]
     current_user = user_collection.find_one({'_id': ObjectId(user_id)})
-    msg_collection = request.app.db[str(current_user['fam'])]
+    msg_collection = db[str(current_user['fam'])]
 
     msg = jsonable_encoder(event.dict(exclude_unset=True))
     msg["timestamp"] = datetime.datetime.utcnow()

@@ -1,16 +1,11 @@
-import os  # add for use with deta
 import jwt
 from fastapi import HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from decouple import config  # deactivate for use with deta
-from setup import DEVELOPER_MODE
 
-if DEVELOPER_MODE:
-    SECRET_STRING = config('SECRET_STRING', cast=str)  # deactivate for use with deta
-else:
-    SECRET_STRING = os.getenv("SECRET_STRING", "test")
+SECRET_STRING = config('SECRET_STRING', cast=str)  # deactivate for use with deta
 
 
 class Authorization:
@@ -26,7 +21,7 @@ class Authorization:
 
     def encode_token(self, user_id):
         payload = {
-            'exp': datetime.utcnow() + timedelta(days=35),
+            'exp': datetime.utcnow() + timedelta(days=31),
             'iat': datetime.utcnow(),
             'sub': user_id
         }

@@ -2,13 +2,18 @@ import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import useAuth from "../hooks/useAuth";
-import { fromJSON } from 'postcss';
 
 const Event = () => {
+    const eventTemplate = {
+      author: '',
+      channel:'',
+      start: new Date(),
+      text:''
+    }
     const {auth} = useAuth()
     const {id} = useParams()
-    const [event, setEvent] = useState({})
-    const [newEvent, setNewEvent] = useState({})
+    const [event, setEvent] = useState(eventTemplate)
+    const [newEvent, setNewEvent] = useState(eventTemplate)
     const [error, setError] = useState("")
     
     let navigate = useNavigate();
@@ -36,9 +41,9 @@ const Event = () => {
         event['start'] = new Date(event.start).toISOString()
         const timeout = 8000;
         const controller = new AbortController();
-        const id2 = setTimeout(() => controller.abort(), timeout);
+        setTimeout(() => controller.abort(), timeout);
         try {
-        const res = await fetch(process.env.REACT_APP_BACKEND_URL + "/events/event/"+id, {
+        await fetch(process.env.REACT_APP_BACKEND_URL + "/events/event/"+id, {
           method:"PATCH",
           signal:controller.signal,
           headers: {
@@ -104,7 +109,6 @@ const Event = () => {
     },[])
 
   return (
-
       <div className='bg-aubergine p-8'>
           <div>
           <span className='text-xl font-bold'>
@@ -112,20 +116,20 @@ const Event = () => {
             </span>
             <p>Author: {event.author}</p>
             <form>
-            <p>Channel:  <select value={newEvent.channel} id="channel" name="channel" label="channel" placeholder="channel" onChange={onChange} required>  
+            <p>Channel:<select value={newEvent.channel} id="channel" name="channel" label="channel" placeholder="channel" onChange={onChange} required>  
                 {auth['members'].map(
-                            (entry)=><option value={entry}>{entry}</option>
+                            (entry,i)=><option value={entry} key={`member${i}`}>{entry}</option>
                         )}    
                       </select></p>
             <p>Startzeit:  <input value={newEvent.start} type="datetime-local" id="start" name="start" label="start" placeholder="start" onChange={onChange} size="40" required/></p>
-            <p>Text:  <input value={newEvent.text} type='text' id="text" name="text" label="text" placeholder="text" onChange={onChange} size="40" required minlength="3"/></p>
+            <p>Text:  <input value={newEvent.text} type='text' id="text" name="text" label="text" placeholder="text" onChange={onChange} size="40" required minLength="3"/></p>
             <div className='text-red-500'>&nbsp; {error && <ul>
                 {error && error.map(
                     (el, index) => (<li key={index}>{el}</li>)
                 )}
             </ul>} </div>
-            <button type="submit" class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded" onClick={handleUpdate}>update event</button>
-            <button class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded" onClick={handleDelete}>delete event</button>
+            <button type="submit" className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded" onClick={handleUpdate}>update event</button>
+            <button className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded" onClick={handleDelete}>delete event</button>
             <span className='text-sm'>
                 <button className='py-2 px-4' type='reset' onClick={handleReset}>Reset</button></span>
                 </form>

@@ -13,6 +13,7 @@ import TermsOfUse from './components/TermsOfUse'
 import Datenschutz from './components/Datenschutz'
 import Impressum from './components/Impressum'
 import NotFound from './components/NotFound'
+import TestFeld from './components/TestFeld'
 
 function App() {
   return (
@@ -25,7 +26,7 @@ function App() {
         <Route path='datenschutz' element={<Datenschutz/>}/>
         <Route path='impressum' element={<Impressum/>}/>
         <Route path="*" element={<NotFound/>} status={"404"}/>
-
+        <Route path="testfeld" element={<TestFeld/>}/>
         <Route element={<RequiredAuthentication />}>
           <Route path="/" element={<DateList/>}/>
           <Route path="new" element={<NewEvent/>}/>

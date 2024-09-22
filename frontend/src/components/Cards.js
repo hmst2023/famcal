@@ -9,7 +9,7 @@ const Cards = (props) => {
   return (
       <div className={`grid grid-cols-${auth['members'].length}`}>
       {auth['members'].map((e1, i)=>{
-                             return<ColCards cards={props.cards.filter(arr=> arr["channel"]===e1)} name={e1} cname={`${i%2===0 ? "bg-stone-300": "bg-fuchsia-200"} p-1 m-1 mb-1 rounded md:p-3 md:mb-2` }/>
+                             return<ColCards cards={props.cards.filter(arr=> arr["channel"]===e1)} name={e1} cname={`${i%2===0 ? "bg-stone-300": "bg-fuchsia-200"} p-1 m-1 mb-1 rounded md:p-3 md:mb-2` } key={`colcard${i}`}/>
                         })}
       </div>
 

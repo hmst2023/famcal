@@ -25,6 +25,11 @@ const Header = () => {
   const handleLogout = ()=>{
     setMenue(false)
     setAuth({})
+    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
+    document.cookie = "id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
+    document.cookie = "admin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
+    document.cookie = "members=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
+    document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
     navigate("/login", {replace:true})
   }
   const Dropdown =() =>{

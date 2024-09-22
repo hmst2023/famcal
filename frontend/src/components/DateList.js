@@ -37,7 +37,7 @@ function DateList() {
                             
                           <div>{null}</div>
                           {auth['members'].map((e1, i)=>{
-                              return<div className={`text-base md:text-xl ${ i%2===0 ? 'text-stone-500' : 'text-fuchsia-900'}`}> {e1}</div>
+                              return<div className={`text-base md:text-xl ${ i%2===0 ? 'text-stone-500' : 'text-fuchsia-900'}`} key={`members${i}`}> {e1}</div>
                          })}
             
           </div>
@@ -65,9 +65,9 @@ function DateList() {
     <div className="bg-stone-200">
               <div className='fixed bottom-10 px-3 box-content h-12 w-12 md:h-24 md:w-24 py-3'><Link to="/new"><Add /></Link></div>
 
-     {msgs.map((e1=>{
+     {msgs.map(((e1,i)=>{
       return(
-        <div>
+        <div key={`Datelist${i}`}>
           <div>
             {yearCheck(new Date(e1.date).getFullYear())}
             {monthCheck(new Date(e1.date).getMonth())}

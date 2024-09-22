@@ -1,10 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate, Link } from "react-router-dom";
 import useAuth from '../hooks/useAuth';
 
 
 const Login = () => {
-  const { setAuth } = useAuth();
+  const { auth, setAuth } = useAuth();
   let navigate = useNavigate();
   const [apiError,setApiError] = useState();
   const onFormReset = ()=> {
@@ -57,6 +57,12 @@ const Login = () => {
       var test = data;
       test["token"] = token;
       setAuth(test);
+      const d = new Date();
+      d.setTime(d.getTime() + (31*24*60*60*1000));
+      for (const x in test){
+        document.cookie = x+"="+test[x]+"; expires="+d.toUTCString()+"; path=/;samesite=strict";
+    }
+
       navigate("/", {replace:true});
     })
   };

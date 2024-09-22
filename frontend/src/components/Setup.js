@@ -8,6 +8,9 @@ const Setup = () => {
         newPass:"",
         verifyPass:""
     }
+    var blubb
+    var blobb
+    var plopp
     const {auth, setAuth} = useAuth();
     const [apiError,setApiError] = useState();
     const [addDescription, setAddDescription] = useState();
@@ -73,7 +76,7 @@ const Setup = () => {
     const id = setTimeout(() => controller.abort(), timeout);
     let dict = {old: e.target.oldPass.value, new: e.target.newPass.value}    
     try {
-      if (e.target.newPass.value != e.target.verifyPass.value){
+      if (e.target.newPass.value !== e.target.verifyPass.value){
         throw new Error("Verify Password does not match")
       }
       const response = await fetch(process.env.REACT_APP_BACKEND_URL + "/users/change_pass", {
@@ -88,8 +91,7 @@ const Setup = () => {
           const token = await response.json();
           setApiError(["password changed"]);
           setFormValues(emptyFormValue);
-
-        } else{
+        } else {
           let errorResponse = await response.json();
           setApiError(errorResponse["detail"]);
         }
@@ -104,8 +106,7 @@ const Setup = () => {
 
   }
   function handleChange(e){
-      setFormValues({... formValues, [e.target.name]: e.target.value });
-
+      setFormValues({...formValues, [e.target.name]: e.target.value });
   }
   async function handleAddOther(e){
       e.preventDefault();
@@ -184,7 +185,7 @@ const Setup = () => {
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), timeout);
       let dict = {username: e.currentTarget.getAttribute("data-value")}
-      console.log(dict)
+      var blobb
       try {
         const response = await fetch(process.env.REACT_APP_BACKEND_URL + "/users/propose", {
           signal:controller.signal,
@@ -200,17 +201,17 @@ const Setup = () => {
           } else{
             let errorResponse = await response.json();
             console.log(errorResponse["detail"])
-            var blobb ={...degradeUserError}
+            blobb ={...degradeUserError}
             blobb[dict.username] = errorResponse["detail"]
             setDegradeUserError(blobb);
           }
       } catch (error) {
         if (error.name==='AbortError'){
-          var blobb ={...degradeUserError}
+          blobb ={...degradeUserError}
           blobb[dict.username] = 'Possible Timeout'
           setDegradeUserError(blobb)
         } else {
-          var blobb ={...degradeUserError}
+          blobb ={...degradeUserError}
           blobb[dict.username] = error.message
           setDegradeUserError(blobb)
         }
@@ -238,32 +239,32 @@ const Setup = () => {
           },
           body:JSON.stringify(dict)});
           if (response.ok){
-            var blubb = {...upgradeOtherMessage}
+            blubb = {...upgradeOtherMessage}
             blubb[dict.username] = "Invited for registration"
             setUpgradeOtherMessage(blubb)
 
-            var blobb ={...upgradeOtherError}
+            blobb ={...upgradeOtherError}
             blobb[dict.username] = false
             setUpgradeOtherError(blobb);
 
-            var plopp = showUpgradeOther
+            plopp = showUpgradeOther
             plopp[dict.username]=!plopp[dict.username]
             setShowUpgradeOther(plopp)
 
             setRefreshFetch(!refreshFetch)
           } else{
             let errorResponse = await response.json();
-            var blubb = {...upgradeOtherError}
+            blubb = {...upgradeOtherError}
             blubb[dict.username] = errorResponse["detail"]
             setUpgradeOtherError(blubb);
           }
       } catch (error) {
         if (error.name==='AbortError'){
-          var blubb = {...upgradeOtherError}
+          blubb = {...upgradeOtherError}
           blubb[dict.username] = 'Possible Timeout'
           setUpgradeOtherError(blubb)
         } else {
-          var blubb = {...upgradeOtherError}
+          blubb = {...upgradeOtherError}
             blubb[dict.username] = error.message
           setUpgradeOtherError(blubb)
         }
@@ -334,7 +335,7 @@ const Setup = () => {
             <div className='App max-w-6xl mx-auto bg-aubergine px-8 py-6'>
              <h1 className='font-bold text-lg leading-loose py-2'>Setup Family Settings</h1>
              <div>Regular Users</div>
-             {famConstellation.users.map(user=>{return <div className='indent-4 py-1'>{user.name} {user.email} {!user.admin && <button onMouseOut={eraseDegradeDescription} onMouseOver={handleDegradeDescription} className="bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white px-1 border border-red-500 hover:border-transparent rounded" data-value={user.name} onClick={handleDegradeUser}>degrade</button>}{degradeDescription[user.name]}</div>})}
+             {famConstellation.users.map(user=>{return <div className='indent-4 py-1' key={user.name}>{user.name} {user.email} {!user.admin && <button onMouseOut={eraseDegradeDescription} onMouseOver={handleDegradeDescription} className="bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white px-1 border border-red-500 hover:border-transparent rounded" data-value={user.name} onClick={handleDegradeUser}>degrade</button>}{degradeDescription[user.name]}</div>})}
              
              <p>&nbsp;</p>
              <p>Other members</p>
@@ -347,13 +348,12 @@ const Setup = () => {
               <form data-value={others} onSubmit={handleUpgradeOther} className='indent-20'>
                 email: <input name={`UpgradeOtherField${others}`} type='email' required/><br/>
                 <div className='text-right text-lg'>
-                <p>&nbsp;{upgradeOtherError[others]}</p>
-
-                <input className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"type='submit'/><br/>
-                <span className='text-sm'>
-                    <input className='py-2 px-4' type="reset" onClick={onFormReset}/>
-                    <hr/>
-                    </span>
+                  <p>&nbsp;{upgradeOtherError[others]}</p>
+                  <input className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"type='submit'/><br/>
+                  <span className='text-sm'>
+                      <input className='py-2 px-4' type="reset" onClick={onFormReset}/>
+                      <hr/>
+                  </span>
                 </div>
               </form>
               </div>
@@ -384,30 +384,29 @@ const Setup = () => {
     }
   return (
     <div>
-
-            <div className='bg-aubergine px-8 py-6'>
-                 <h1 className='font-bold text-lg leading-loose py-2'>Setup Personal Settings</h1>
-                 <div className='flex'>
-                 <form onSubmit={onFormSubmit} onReset={onFormReset} autoComplete='off'>
-                    actual password: <input value={formValues.oldPass} onChange={handleChange} type="password" name="oldPass" required/><br/>
-                    <p>&nbsp;</p>
-                    new passwort: &nbsp;&nbsp;&nbsp;&nbsp;<input value={formValues.newPass} type="password" name="newPass" onReset={onFormReset} onSubmit={onFormSubmit} onChange={handleChange} autocomplete="new-password" required/><br/>
-                    <p>&nbsp;</p>
-                    Verify Password: <input value={formValues.verifyPass} minLength="4" name='verifyPass' type='password'  onChange={handleChange} required/>
-                    <p className='text-right text-xs text-red-500'>&nbsp; {apiError}</p>
-                    <div className='text-right text-lg'>
-                    <input className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded" type="submit"/> <br/>
-                    <span className='text-sm'>
-                    <input className='py-2 px-4' type="reset"/>
-                    </span></div>
-                    </form>
-                </div>
-                <div>{auth.admin ? <button className="bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white px-1 border border-red-500 hover:border-transparent rounded" onClick={handleIrreversibleClick}>Irreversible delete all family data now</button>:<button data-value={auth.username} onClick={handleDegradeUser} className="bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white px-1 border border-red-500 hover:border-transparent rounded">Delete my Account</button>}</div> 
-                {auth.admin && <p className='text-xs text-red-500'>{irreversibleError}</p>}
-            </div>
-            <div>
-            <p>{auth?.admin && FamilySetup()}</p>
-            </div>
+      <div className='bg-aubergine px-8 py-6'>
+        <h1 className='font-bold text-lg leading-loose py-2'>Setup Personal Settings</h1>
+        <div className='flex'>
+        <form onSubmit={onFormSubmit} onReset={onFormReset} autoComplete='off'>
+          actual password: <input value={formValues.oldPass} onChange={handleChange} type="password" name="oldPass" required/><br/>
+          <p>&nbsp;</p>
+          new passwort: &nbsp;&nbsp;&nbsp;&nbsp;<input value={formValues.newPass} type="password" name="newPass" onReset={onFormReset} onSubmit={onFormSubmit} onChange={handleChange} autoComplete="new-password" required/><br/>
+          <p>&nbsp;</p>
+          Verify Password: <input value={formValues.verifyPass} minLength="4" name='verifyPass' type='password'  onChange={handleChange} required/>
+          <p className='text-right text-xs text-red-500'>&nbsp; {apiError}</p>
+          <div className='text-right text-lg'>
+          <input className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded" type="submit"/> <br/>
+          <span className='text-sm'>
+          <input className='py-2 px-4' type="reset"/>
+          </span></div>
+          </form>
+      </div>
+      <div>{auth.admin ? <button className="bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white px-1 border border-red-500 hover:border-transparent rounded" onClick={handleIrreversibleClick}>Irreversible delete all family data now</button>:<button data-value={auth.username} onClick={handleDegradeUser} className="bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white px-1 border border-red-500 hover:border-transparent rounded">Delete my Account</button>}</div> 
+      {auth.admin && <p className='text-xs text-red-500'>{irreversibleError}</p>}
+      </div>
+      <div>
+        {auth?.admin && FamilySetup()}
+      </div>
 
 
 

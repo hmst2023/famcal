@@ -1,30 +1,13 @@
-from pydantic import BaseModel, Field, EmailStr
-from bson import ObjectId, Optional
+from pydantic import BaseModel, Field, EmailStr, BeforeValidator
+from bson import Optional
 import datetime
-from typing import Union, List
+from typing import Union, Annotated
 
-
-class PyObjectId(ObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError('invalid objectid')
-        return str(v)
-
-    @classmethod
-    def __modify_schema__(cls,field_schema):
-        field_schema.update(type='string')
+PyObjectId = Annotated[str, BeforeValidator(str)]
 
 
 class MongoBaseModel(BaseModel):
-    id:PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-
-    class Config:
-        jsonable_encoder = {ObjectId:str}
+    id: Optional[PyObjectId] = Field(alias="_id", default=None)
 
 
 class ChangePass(BaseModel):
@@ -43,7 +26,7 @@ class Disposal(BaseModel):
 
 
 class Proposal(BaseModel):
-    username: Optional[str]
+    username: Optional[str] = None
     email: EmailStr
 
 
@@ -57,7 +40,7 @@ class ProposalFam(BaseModel):
 
 
 class Event(BaseModel):
-    author:Optional[str]
+    author:Optional[str] = None
     channel: str
     start: datetime.datetime
     text: str

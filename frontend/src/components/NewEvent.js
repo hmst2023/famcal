@@ -13,8 +13,6 @@ const NewEvent = () => {
         "start":date.toISOString().slice(0,16),
         "text":""
     }
-    console.log(emptyEvent.start)
-
     const [newEvent, setNewEvent] = useState(emptyEvent)
     const [error, setError] = useState([])
 
@@ -90,7 +88,7 @@ const NewEvent = () => {
             <form>
                 <select value={newEvent.channel} id="channel" name="channel" label="channel" placeholder="channel" onChange={onChange} required>
                     {auth['members'].map(
-                        (entry)=><option value={entry}>{entry}</option>
+                        (entry, i)=><option value={entry} key={i}>{entry}</option>
                     )}    
                 </select>
                 <p>&nbsp;</p>

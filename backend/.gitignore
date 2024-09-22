@@ -7,3 +7,4 @@ Spacefile
 .space/
 copy_db.py
 .pytest_cache
+.vercel
